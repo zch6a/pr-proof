@@ -39,7 +39,7 @@ test("release: tests with a read-only token; the job that can write runs nothing
 
 test("every action in every workflow is pinned to a commit (the local action excepted)", () => {
   for (const name of ["ci.yml", "release.yml", "pr-proof.yml"]) {
-    for (const [, ref] of workflow(name).matchAll(/uses: ([^\s#]+)/g)) {
+    for (const [, ref] of workflow(name).matchAll(/^\s*-?\s*uses: ([^\s#]+)/gm)) {
       if (ref === "./") continue;
       assert.match(String(ref), /@[0-9a-f]{40}$/, `${name}: ${ref}`);
     }
