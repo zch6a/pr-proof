@@ -12,7 +12,8 @@ import { PROJECT, makeRepo } from "./helpers.js";
 test("paths, functions and options in inline code; what is not one", () => {
   assert.equal(asPath("src/widget/sync.py"), "src/widget/sync.py");
   assert.equal(asPath("./src/widget/sync.py:12"), "src/widget/sync.py");
-  assert.equal(asPath("sync.py#L4"), "sync.py");
+  assert.equal(asPath("src/widget/sync.py#L4"), "src/widget/sync.py");
+  assert.equal(asPath("sync.py"), null, "a bare name is too often not this repository's file");
   assert.equal(asPath("src/widget/"), "src/widget");
   for (const no of ["https://x.example/a.js", "~/x.py", "/etc/hosts", "C:\\x\\y.py", "*.py", "path/to/file.js", "os.path.join", "1.2.3", "npm test", "node_modules/x/y.js", "../outside.js"]) assert.equal(asPath(no), null, no);
   assert.equal(asSymbol("refresh_token_cache()"), "refresh_token_cache");
@@ -62,7 +63,7 @@ test("against a repository: what exists is found, what does not is said, with th
   t.after(repo.cleanup);
   const text = [
     "The bug is in `src/widget/sync.py`: `sync_items()` ignores `--dry-run`.",
-    "It also needs `Cache.evict()` and `sync.py` (no folder given).",
+    "It also needs `Cache.evict()` and `widget/sync.py` (relative to src/).",
     "Calling `refresh_token_cache()` in `src/widget/tokens.py` with `--force-sync` fixes it.",
   ].join("\n");
   const { result } = await check({ text, index: indexRepo(repo.dir), isPull: false });
@@ -112,7 +113,7 @@ test("references and advisories through lookups; unknown is never reported", asy
   const { result } = await check({ text, index: indexRepo(repo.dir), changes: changesOf([]), owner: "acme", repo: "widget", isPull: true, lookups });
   assert.deepEqual(result.unverified.map((u) => `${u.kind} ${u.said}`), ["fixes #12", "ref #13", "advisory CVE-2025-99999"]);
   assert.match(result.unverified[0]?.detail ?? "", /#12, which is a pull request, not an issue/);
-  assert.match(result.unverified[1]?.detail ?? "", /no issue or pull request #13 in acme\/widget/);
+  assert.match(result.unverified[1]?.detail ?? "", /no issue, pull request or discussion #13 in acme\/widget/);
 });
 
 test("the comment: facts and a way to answer; text from the contribution cannot ping, format or inject", async () => {
@@ -121,10 +122,10 @@ test("the comment: facts and a way to answer; text from the contribution cannot 
   assert.match(md, /^<!-- pr-proof -->/);
   assert.match(md, /could not verify one statement in this pull request/);
   assert.match(md, /not a judgement of the contribution or of how it was written/);
-  assert.doesNotMatch(md, /@octocat/, "no mention");
-  assert.doesNotMatch(md, /<img/, "no HTML from the contribution");
-  assert.match(md, /\\\|/, "a pipe cannot break the table");
-  assert.ok(quote("x".repeat(500)).length <= 100);
+  // Text from the contribution is shown as code: a mention there notifies no one, HTML there is text.
+  assert.match(md, /\| `'@octocat' <img src=x> \\\| a 'b' c` \|/);
+  assert.equal(md.split("\n").find((l) => l.startsWith("| Function"))?.split(/(?<!\\)\|/).length, 5, "still three cells");
+  assert.ok(quote("x".repeat(500)).length <= 102, "100 characters and the backticks of the code span");
   const clean = renderComment({ unverified: [], checked: { paths: 2, symbols: 1, options: 0, refs: 0, advisories: 0, statements: 0 }, notChecked: [] }, { subject: "issue" });
   assert.match(clean, /everything in this issue that could be checked against the repository was found \(3 checked\)/);
 });

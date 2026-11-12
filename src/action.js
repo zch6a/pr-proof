@@ -14,8 +14,15 @@ import { changesOf, indexRepo } from "./repo.js";
 import { MARKER, renderComment } from "./report.js";
 
 const env = process.env;
-/** Inputs reach an Action as INPUT_<NAME> (upper case, spaces as underscores, hyphens kept). @param {string} name @param {string} fallback */
-const input = (name, fallback) => (env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] ?? "").trim() || fallback;
+/**
+ * Inputs reach an Action as INPUT_<NAME> (upper case, spaces as underscores, hyphens kept); GitHub sets the default
+ * when an input is not given, so an empty value is what the workflow asked for (`label: ""` means no label).
+ * @param {string} name @param {string} fallback
+ */
+const input = (name, fallback) => {
+  const v = env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`];
+  return v === undefined ? fallback : v.trim();
+};
 const MAINTAINERS = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
 
 /** @param {string} name @param {string} value */
@@ -41,8 +48,15 @@ export async function run() {
 
   const workspace = env.GITHUB_WORKSPACE ?? process.cwd();
   if (!existsSync(join(workspace, ".git"))) throw new Error("pr-proof needs the repository checked out: add `- uses: actions/checkout@v7` before it (for pull_request_target it checks out the base, which is what pr-proof should read).");
-  const mode = input("mode", "comment");
+  let mode = input("mode", "comment") || "comment";
   if (!["comment", "summary"].includes(mode)) throw new Error(`mode must be "comment" or "summary", not "${mode}"`);
+  // A pull_request event from a fork has a read-only token: comment and label would fail (and a red check would wrongly
+  // blame the contributor). The job summary still has the result.
+  const fork = isPull && eventName === "pull_request" && subject.head?.repo && subject.base?.repo && subject.head.repo.full_name !== subject.base.repo.full_name;
+  if (fork && mode === "comment") {
+    console.log("::notice::pr-proof: a pull_request event from a fork has a read-only token, so the result is in the job summary only. Use pull_request_target to comment.");
+    mode = "summary";
+  }
   const label = input("label", "needs-evidence");
   // GITHUB_API_URL is set by GitHub (GitHub Enterprise has its own); PR_PROOF_CVE_API only for tests and mirrors.
   const gh = client({ token: input("github-token", env.GITHUB_TOKEN ?? ""), api: env.GITHUB_API_URL, cveApi: env.PR_PROOF_CVE_API });
@@ -50,7 +64,8 @@ export async function run() {
   const index = indexRepo(workspace);
   const changes = isPull ? changesOf(await gh.pullFiles(owner, repo, subject.number)) : null;
   const { result, comment } = await check({
-    text: `${subject.title ? `${subject.title}\n\n` : ""}${subject.body ?? ""}`,
+    title: subject.title ?? "",
+    text: subject.body ?? "",
     index, changes, owner, repo, isPull,
     lookups: { ref: (o, r, n) => gh.ref(o, r, n), advisory: (id) => gh.advisory(id) },
   });
@@ -59,15 +74,24 @@ export async function run() {
   summary(comment.replace(MARKER, "").trim());
   console.log(comment.replace(MARKER, "").trim());
 
-  if (mode === "summary") return;
-  const previous = await gh.findComment(owner, repo, subject.number, MARKER);
-  if (count) {
-    await gh.writeComment(owner, repo, subject.number, comment, previous?.id);
-    if (label) await gh.setLabel(owner, repo, subject.number, label, true);
-  } else if (previous) {
-    // Fixed since the last run: say so in the same place, and take the label off.
-    await gh.writeComment(owner, repo, subject.number, renderComment(result, { subject: isPull ? "pull request" : "issue", sha: index.sha }), previous.id);
-    if (label) await gh.setLabel(owner, repo, subject.number, label, false);
+  if (mode === "summary") {
+    if (count && input("fail-on-unverified", "false") === "true") process.exitCode = 1;
+    return;
+  }
+  try {
+    const previous = await gh.findComment(owner, repo, subject.number, MARKER);
+    if (count) {
+      await gh.writeComment(owner, repo, subject.number, comment, previous?.id);
+      if (label) await gh.setLabel(owner, repo, subject.number, label, true);
+    } else {
+      // Fixed since the last run: say so in the same place. The label comes off whether or not the comment is still there.
+      if (previous) await gh.writeComment(owner, repo, subject.number, renderComment(result, { subject: isPull ? "pull request" : "issue", sha: index.sha }), previous.id);
+      if (label) await gh.setLabel(owner, repo, subject.number, label, false);
+    }
+  } catch (e) {
+    // A token that cannot write is the workflow's setup, not the contributor's doing: a warning, and the summary has it all.
+    if (/** @type {{readOnly?: boolean}} */ (e).readOnly) console.log(`::warning::pr-proof: ${/** @type {Error} */ (e).message}`);
+    else throw e;
   }
   if (count && input("fail-on-unverified", "false") === "true") process.exitCode = 1;
 }

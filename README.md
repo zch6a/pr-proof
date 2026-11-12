@@ -27,11 +27,11 @@ the checking, and leaves this (real output, on the test project):
 >
 > | | Says | Checked |
 > |---|---|---|
-> | Fixes (line 1) | #41 | It says it fixes #41, which is a pull request, not an issue. |
-> | File (line 3) | src/widget/tokens.py | No file or folder `src/widget/tokens.py` in this repository or in this pull request's changes (at a47c80f). |
-> | Function (line 3) | refresh_token_cache() | The name `refresh_token_cache` appears nowhere in this repository or in this pull request's changes (at a47c80f). |
-> | Option (line 4) | --force-sync | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at a47c80f). |
-> | Tests (line 4) | This also adds regression tests. | It says it adds tests, but none of the changed files is a test file. |
+> | Fixes (line 1) | `#41` | It says it fixes #41, which is a pull request, not an issue: closing keywords only close issues. |
+> | File (line 3) | `src/widget/tokens.py` | No file or folder `src/widget/tokens.py` in this repository or in this pull request's changes (at ffadaa6). |
+> | Function (line 3) | `refresh_token_cache()` | The name `refresh_token_cache` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
+> | Option (line 4) | `--force-sync` | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
+> | Tests (line 4) | `This also adds regression tests.` | It says it adds tests, but none of the changed files is a test file, and no added line is a test. |
 >
 > If these are right (a function from a dependency, an issue in another tracker), a link or a line of explanation is all that is needed. This is a check of facts, not a judgement of the contribution or of how it was written.
 
@@ -42,17 +42,31 @@ and takes the label off.
 
 | | |
 |---|---|
-| **Files** | paths in inline code (`src/auth.py`, `lib/x.js:42`, `docs/`), and in stack traces in code blocks (Python, JavaScript, Go): in the repository, or added, renamed or removed by the pull request |
-| **Functions** | `name()`, `obj.name()`, `Mod::name()` in inline code: the name appears somewhere in the repository or on the pull request's added lines |
-| **Options** | `--long-option` in inline code: appears in the repository or the pull request |
-| **References** | `#12`, `owner/repo#12` and issue links exist; "fixes / closes / resolves #12" in a pull request points to an issue, not a pull request |
-| **Advisories** | CVE ids exist in the CVE list (cve.org); GHSA ids in the GitHub Advisory Database |
-| **Statements** | a pull request that says it adds tests changes a test file; one that says it updates the docs changes documentation |
+| **Files** | paths in inline code (`src/auth.py`, `lib/x.js:42`, `docs/`) and frames of stack traces in code blocks (Python, JavaScript, Go): in the repository (ignoring case), or added, renamed or removed by the pull request. Only paths that are about this repository: with a folder, and a first folder the repository has |
+| **Functions** | `name()`, `obj.name()`, `Mod::name()` in inline code: the name appears somewhere in the repository or on the pull request's added lines, in any of its spellings (`user_id` for `getUserId()`) |
+| **Options** | `--long-option` in inline code: appears in the repository or the pull request, with or without its dashes (`flag.Bool("dry-run")`, clap's `dry_run`) |
+| **References** | `#12`, `owner/repo#12` and issue links exist (as an issue, pull request or discussion); "fixes / closes / resolves #12" in a pull request points to an issue, not a pull request |
+| **Advisories** | CVE ids exist in the CVE list (cve.org); GHSA ids in the GitHub Advisory Database or the repository's own advisories |
+| **Statements** | a pull request that says it adds tests changes a test file or adds test code (`#[test]`, `def test_`); one that says it updates the docs changes documentation or adds doc comments |
 
-Skipped on purpose: HTML comments (pull request templates keep their instructions there), quoted replies, unticked
-checkboxes, negations ("no tests yet", "tests in a follow-up"), URLs, placeholders (`path/to/file`, `your-app`),
-absolute system paths (`/etc/hosts`, `~/.config`), globs, and names in code blocks other than stack traces (a pasted
-snippet calls other people's code).
+Skipped on purpose, because a contributor told that something true "could not be verified" is wronged:
+- HTML comments (pull request templates keep their instructions there), quoted replies, and template checkboxes
+  (ticked or not: "- [x] I've added tests" is the template's question, not the author's statement);
+- negations, questions, offers and plans ("I didn't add tests", "should I add tests?", "I'll add tests later"),
+  and reports of a test run ("all 456 tests pass");
+- names that are not about this repository: bare file names (`sample.txt` is usually the reader's own file),
+  slashed words (`and/or`, `react-dom/client`, `origin/main`), library names (`Node.js`), URLs, placeholders,
+  absolute and home paths, globs, ignored and generated files, and files in submodules;
+- frames of dependencies and the runtime in stack traces (`site-packages`, `node_modules`, `/usr/lib`), and code in
+  code blocks other than stack traces (a pasted snippet calls other people's code);
+- calls on standard libraries (`JSON.parse()`, `std::fs::read()`), options every framework adds (`--help`),
+  colours (`#333` in a line about colours), ordinals ("step #1") and `#0`.
+
+**Measured** on 128 recently merged pull requests of seven projects (Flask, Express, HTTPie, bat, HTTPX, Vite,
+cobra), where nearly everything flagged would be a false alarm: 7 statements in 6 pull requests. Three are real (a
+description naming a file the pull request does not touch, "added unit tests" on a pull request that changes no test,
+a link to a pull request that does not exist), three say "fixes" for a pull request that was superseded, one is a
+function from a dependency. `scripts/precision.mjs` re-runs it against that baseline.
 
 ## What it never does
 
@@ -64,6 +78,8 @@ snippet calls other people's code).
 - **Decides nothing.** It does not close, approve or request changes. It comments and labels; `mode: summary` does
   not even do that.
 - **Skips maintainers and bots** by default (`check-maintainers: true` to include them).
+- **Never blames the contributor for the workflow's setup:** on a `pull_request` event from a fork (a read-only
+  token) it writes the job summary only, and a token that cannot write gives a warning, not a failed check.
 
 ## Use
 
@@ -88,7 +104,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0.1.0
+      - uses: zch6a/pr-proof@v0.2.0
         with:
           mode: summary # start with the job summary only; switch to "comment" when you like what it says
 ```
@@ -122,11 +138,14 @@ Exit code 0 when everything checked was found, 1 when something could not be ver
 
 - **A name in a dependency is reported.** `requests.get()` is found if `get` appears anywhere in your repository,
   which it usually does; a function only a dependency has is not. The comment says how to answer.
-- Function and option names are checked only when the whole repository (up to 300 MB of text, files up to 1 MB) and
-  the whole diff could be read; otherwise they are listed as not checked, never as missing.
+- Function and option names are checked only when the whole repository (up to 300 MB of text; source files up to
+  16 MB, UTF-8 or UTF-16) and the whole diff could be read; otherwise they are listed as not checked, never as
+  missing. References and advisories that could not be looked up (rate limits, a repository the token cannot see)
+  are listed as not checked too.
 - "Adds tests" and "updates the docs" are recognised in English, and test and documentation files by their names and
   folders (`tests/`, `*.test.ts`, `test_*.py`, `*_test.go`, `docs/`, `README`, `*.md`).
-- References to issues in a repository the token cannot see are not checked. GitHub-hosted repositories only.
+- The command line reads committed and staged files (`git ls-files`); a new file is found once it is added.
+- GitHub-hosted repositories; on GitHub Enterprise, GHSA ids that its API does not know are listed as not checked.
 
 ## What it sends
 

@@ -1,16 +1,35 @@
 {
   "name": "pr-proof",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A GitHub Action for maintainers that checks what a pull request or issue says against the repository: the files, functions and options it names exist, the issues it references are real, \"adds tests\" comes with tests. No AI; it states facts and asks for evidence.",
-  "keywords": ["github-action", "pull-requests", "maintainers", "open-source", "ai-slop", "triage"],
+  "keywords": [
+    "github-action",
+    "pull-requests",
+    "maintainers",
+    "open-source",
+    "ai-slop",
+    "triage"
+  ],
   "license": "MIT",
   "author": "zch6a",
-  "repository": { "type": "git", "url": "git+https://github.com/zch6a/pr-proof.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zch6a/pr-proof.git"
+  },
   "type": "module",
-  "bin": { "pr-proof": "src/cli.js" },
-  "files": ["src", "action.yml", "README.md", "LICENSE"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "pr-proof": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "action.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test",
     "check": "tsc --noEmit -p jsconfig.json"

@@ -21,11 +21,11 @@
 >
 > | | Says | Checked |
 > |---|---|---|
-> | Fixes (line 1) | #41 | It says it fixes #41, which is a pull request, not an issue. |
-> | File (line 3) | src/widget/tokens.py | No file or folder `src/widget/tokens.py` in this repository or in this pull request's changes (at a47c80f). |
-> | Function (line 3) | refresh_token_cache() | The name `refresh_token_cache` appears nowhere in this repository or in this pull request's changes (at a47c80f). |
-> | Option (line 4) | --force-sync | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at a47c80f). |
-> | Tests (line 4) | This also adds regression tests. | It says it adds tests, but none of the changed files is a test file. |
+> | Fixes (line 1) | `#41` | It says it fixes #41, which is a pull request, not an issue: closing keywords only close issues. |
+> | File (line 3) | `src/widget/tokens.py` | No file or folder `src/widget/tokens.py` in this repository or in this pull request's changes (at ffadaa6). |
+> | Function (line 3) | `refresh_token_cache()` | The name `refresh_token_cache` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
+> | Option (line 4) | `--force-sync` | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
+> | Tests (line 4) | `This also adds regression tests.` | It says it adds tests, but none of the changed files is a test file, and no added line is a test. |
 
 作者改好描述或代码之后，下一次运行会把同一条评论改成“全部核对通过”，并去掉标签。
 
@@ -40,7 +40,9 @@
 | **安全公告** | CVE 编号在 CVE 列表（cve.org）里存在；GHSA 编号在 GitHub Advisory Database 里存在 |
 | **说法** | PR 说加了测试，就要改到测试文件；说更新了文档，就要改到文档 |
 
-有意跳过：HTML 注释（PR 模板把说明放在里面）、引用的回复、没勾选的复选框、否定说法（“还没有测试”“测试之后补”）、网址、占位符（`path/to/file`、`your-app`）、系统绝对路径（`/etc/hosts`、`~/.config`）、通配符，以及代码块里除堆栈信息以外的名字（贴出来的代码片段调用的是别人的代码）。
+有意跳过（把真实存在的东西说成“无法核实”，会冤枉贡献者）：HTML 注释（PR 模板把说明放在里面）、引用的回复、模板里的复选框（勾没勾都不算作者本人的说法）；否定、提问、表态和计划（“我没加测试”“要不要加测试？”“之后再补测试”），以及测试运行结果（“全部 456 个测试通过”）；不属于这个仓库的名字：不带目录的文件名（`sample.txt` 通常是读者自己的文件）、带斜杠的普通词（`and/or`、`react-dom/client`、`origin/main`）、库名（`Node.js`）、网址、占位符、绝对路径和家目录路径、通配符、被忽略或生成的文件、子模块里的文件；堆栈信息里依赖库和运行时的帧（`site-packages`、`node_modules`、`/usr/lib`），以及代码块里除堆栈信息以外的代码；标准库的调用（`JSON.parse()`）、所有框架都自带的选项（`--help`）、颜色（讲颜色的那一行里的 `#333`）、序号（“step #1”）和 `#0`。
+
+**实测**：在 7 个项目（Flask、Express、HTTPie、bat、HTTPX、Vite、cobra）最近合并的 128 个 PR 上运行（合并过的 PR 里被报出来的几乎都是误报），一共只报了 6 个 PR 里的 7 条：3 条是真问题（描述里写的文件 PR 根本没碰、说“加了单元测试”却没改任何测试、链接的 PR 不存在），3 条是用 “fixes” 指向了被取代的 PR，1 条是依赖库里的函数。`scripts/precision.mjs` 可以对照这个基线重跑。
 
 ## 它绝不做的事
 
@@ -49,6 +51,7 @@
 - **不运行 PR 里的任何东西。** 它读取已检出的基础分支，以及通过 API 拿到的 PR 改动。所以它和 `pull_request_target` 一起用是安全的（fork 来的 PR 需要它才能拿到能发评论的 token）。
 - **不做决定。** 它不关闭、不批准、不要求修改，只评论和打标签；`mode: summary` 连这些都不做。
 - 默认**跳过维护者和机器人**（`check-maintainers: true` 可以把他们也算上）。
+- **不会因为工作流的配置去怪贡献者**：fork 来的 PR 用 `pull_request` 事件时 token 只读，它只写任务摘要；token 没有写权限时给一个警告，而不是让检查变红。
 
 ## 使用
 
@@ -73,7 +76,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0.1.0
+      - uses: zch6a/pr-proof@v0.2.0
         with:
           mode: summary # 先只写任务摘要；觉得说得对了再改成 "comment"
 ```

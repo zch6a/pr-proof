@@ -79,7 +79,7 @@ test("quiet when everything checks out and there was no comment; maintainers and
   t.after(() => { gh.close(); repo.cleanup(); });
   const fine = /** @type {any} */ (await runAction({ event: pr("Touches `src/widget/cache.py`."), name: "pull_request_target", workspace: repo.dir, api: gh.url }));
   assert.equal(fine.code, 0, fine.out);
-  assert.ok(!gh.requests.some((/** @type {any} */ q) => q.method !== "GET"), "nothing written");
+  assert.ok(!gh.requests.some((/** @type {any} */ q) => q.method !== "GET" && !(q.method === "DELETE" && q.url.endsWith("/labels/needs-evidence"))), "nothing written but taking a label off");
   const maint = /** @type {any} */ (await runAction({ event: pr("`made_up()`", "MEMBER"), name: "pull_request_target", workspace: repo.dir, api: gh.url }));
   assert.match(maint.out, /member of the repository, not checked/);
   const bot = /** @type {any} */ (await runAction({ event: { action: "opened", pull_request: { ...pr("x").pull_request, user: { type: "Bot" } } }, name: "pull_request_target", workspace: repo.dir, api: gh.url }));
