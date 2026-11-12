@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — 2026-11-12
+
+Polishing round 2.
+
+- **Tried end to end on GitHub**, on this repository: a pull request with five statements that do not check out got
+  one comment (all five right) and the `needs-evidence` label; after its description was fixed the same comment was
+  edited to say everything checked out and the label came off (#1); an issue got its comment, with a real lookup on
+  cve.org (#2). Until now the Action had only run against a local stand-in for the API.
+- **Releases:** each version tag makes a GitHub release with the version's CHANGELOG section and moves the major tag,
+  so workflows can use `zch6a/pr-proof@v0`; tested with a read-only token, and the job that can write runs nothing of
+  the project.
+- `CONTRIBUTING.md` (a false alarm is the worst bug; the precision check before a pull request), `SECURITY.md` (what
+  the token is used for, hostile text, the recommended permissions).
+- The type check now also fails on unused code.
+
 ## 0.2.0 — 2026-11-12
 
 Polishing round 1: precision. An independent review found 22 problems, most of them false alarms (telling a

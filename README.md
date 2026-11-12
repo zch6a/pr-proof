@@ -36,7 +36,8 @@ the checking, and leaves this (real output, on the test project):
 > If these are right (a function from a dependency, an issue in another tracker), a link or a line of explanation is all that is needed. This is a check of facts, not a judgement of the contribution or of how it was written.
 
 When the author fixes the description or the code, the next run edits the same comment to say everything checked out
-and takes the label off.
+and takes the label off. Both are tried on GitHub itself: [pull request #1](https://github.com/zch6a/pr-proof/pull/1)
+and [issue #2](https://github.com/zch6a/pr-proof/issues/2) of this repository.
 
 ## What it checks
 
@@ -104,7 +105,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0.2.0
+      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.3.0
         with:
           mode: summary # start with the job summary only; switch to "comment" when you like what it says
 ```

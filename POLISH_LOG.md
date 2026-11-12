@@ -86,3 +86,28 @@ catches, which must still be caught.
 "docs for CI" also rejected "Adds docs for the new option"; the test of real statements caught it.
 
 Tests: 29 (was 16).
+
+## Round 2 — 2026-11-12 (0.3.0)
+
+- **The real thing, on GitHub.** Until now the Action had run only against a local stand-in for the API. This
+  repository's own workflow (`.github/workflows/pr-proof.yml`, `uses: ./`, now with `check-maintainers: true`, since
+  its pull requests are the owner's) checked a test pull request whose description named an issue, a file, a
+  function and an option that do not exist and said it adds tests: under `pull_request_target`, github-actions
+  commented with all five, each right, and added `needs-evidence`. The description was then edited to name things
+  that exist: the same comment was edited to "everything … was found (3 checked)" and the label came off. A test
+  issue got its comment too, with a real lookup on cve.org for an id that does not exist. Both closed, the branch
+  deleted. (A SonarCloud bot installed on the account commented on the pull request as well; nothing to do with this.)
+- **A slip of mine:** I pushed a commit while one test was failing (the command went on after `npm test` failed):
+  the new workflow test read a `uses: ./` inside a YAML comment. Fixed in the next commit, and the commit step now
+  runs only when the tests pass.
+- **Releases** (`.github/workflows/release.yml`): a version tag tests with a read-only token, then a job that runs
+  nothing of the project makes the GitHub release from the CHANGELOG and moves the major tag (`v0`), which is how
+  Action users pin. `test/workflows.test.js` keeps the write token out of the test job and every action pinned.
+- **Docs:** CONTRIBUTING (a false alarm is the worst bug; run the precision check), SECURITY (what the token is
+  used for, bounds, hostile text, recommended permissions), linked from the README; the README points to the two
+  real runs.
+- **Code:** `tsc` with `noUnusedLocals` and `noUnusedParameters` found nothing unused; both are now on.
+- **Presentation:** social preview (`docs/social-preview.png`, from `scripts/social-card.html`: the comment from the
+  real run), launch kit (`launch/pr-proof.md`, outside the repository).
+
+Tests: 33 (was 29).

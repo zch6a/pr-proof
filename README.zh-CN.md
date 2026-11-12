@@ -27,7 +27,7 @@
 > | Option (line 4) | `--force-sync` | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
 > | Tests (line 4) | `This also adds regression tests.` | It says it adds tests, but none of the changed files is a test file, and no added line is a test. |
 
-作者改好描述或代码之后，下一次运行会把同一条评论改成“全部核对通过”，并去掉标签。
+作者改好描述或代码之后，下一次运行会把同一条评论改成“全部核对通过”，并去掉标签。这两点都在 GitHub 上真实跑过：本仓库的 [PR #1](https://github.com/zch6a/pr-proof/pull/1) 和 [issue #2](https://github.com/zch6a/pr-proof/issues/2)。
 
 ## 核对什么
 
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0.2.0
+      - uses: zch6a/pr-proof@v0 # 或者某个发布版，比如 @v0.3.0
         with:
           mode: summary # 先只写任务摘要；觉得说得对了再改成 "comment"
 ```

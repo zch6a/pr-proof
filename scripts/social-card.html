@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- The repository's social preview (1280×640): docs/social-preview.png, rendered from this page with headless Chrome
+     (chrome --headless --screenshot --window-size=1280,640). The comment is the one pr-proof left on its own test pull
+     request (zch6a/pr-proof#1), shortened. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+  body { background: radial-gradient(1100px 700px at 12% 8%, #1b2a22 0%, #111612 55%, #0c0e0c 100%); color: #e6edf3;
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif; display: grid; grid-template-columns: 440px 1fr; gap: 44px;
+    padding: 0 56px 0 72px; box-sizing: border-box; align-items: center; }
+  h1 { font-size: 66px; margin: 0 0 18px; letter-spacing: -1.5px; }
+  h1 span { color: #3fb950; }
+  .tag { font-size: 31px; line-height: 1.25; margin: 0 0 24px; font-weight: 600; }
+  .sub { font-size: 19px; line-height: 1.5; color: #b1bac4; margin: 0 0 28px; }
+  .pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pills span { font-size: 15px; border: 1px solid #30363d; background: #161b22; border-radius: 999px; padding: 6px 13px; color: #c9d1d9; }
+  .comment { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; box-shadow: 0 26px 70px rgba(0,0,0,.5); overflow: hidden; }
+  .head { display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: #161b22; border-bottom: 1px solid #30363d; font-size: 15px; color: #8b949e; }
+  .head b { color: #e6edf3; }
+  .avatar { width: 22px; height: 22px; border-radius: 50%; background: #3fb950; }
+  .body { padding: 14px 18px 16px; font-size: 15px; }
+  .body p { margin: 0 0 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { border: 1px solid #30363d; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #161b22; }
+  code { font: 12.5px Consolas, ui-monospace, monospace; background: rgba(110,118,129,.25); border-radius: 5px; padding: 1px 5px; }
+  .label { display: inline-block; margin-top: 12px; font-size: 12px; font-weight: 600; color: #f0c674; border: 1px solid #f0c674; border-radius: 999px; padding: 2px 10px; }
+</style>
+</head>
+<body>
+  <div>
+    <h1>pr-<span>proof</span></h1>
+    <p class="tag">Does the pull request say<br>what the code says?</p>
+    <p class="sub">A GitHub Action that checks the files, functions, options, issues and CVEs a pull request or issue names against your repository, and asks for evidence where they do not check out.</p>
+    <div class="pills"><span>No AI</span><span>Facts, not accusations</span><span>Runs nothing from the PR</span><span>0 dependencies</span></div>
+  </div>
+  <div class="comment">
+    <div class="head"><span class="avatar"></span><b>github-actions</b> commented</div>
+    <div class="body">
+      <p><b>pr-proof</b> could not verify 5 statements in this pull request against the repository:</p>
+      <table>
+        <tr><th></th><th>Says</th><th>Checked</th></tr>
+        <tr><td>Reference</td><td><code>#9999</code></td><td>There is no issue, pull request or discussion #9999.</td></tr>
+        <tr><td>File</td><td><code>src/parse_config.js</code></td><td>No file or folder <code>src/parse_config.js</code> in this repository or in this pull request's changes.</td></tr>
+        <tr><td>Function</td><td><code>loadSettingsCache()</code></td><td>The name <code>loadSettingsCache</code> appears nowhere in this repository.</td></tr>
+        <tr><td>Option</td><td><code>--strict-mode</code></td><td>The option <code>--strict-mode</code> appears nowhere in this repository.</td></tr>
+        <tr><td>Tests</td><td><code>This adds tests.</code></td><td>None of the changed files is a test file.</td></tr>
+      </table>
+      <span class="label">needs-evidence</span>
+    </div>
+  </div>
+</body>
+</html>
