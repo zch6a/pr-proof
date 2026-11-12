@@ -164,6 +164,9 @@ npm run check   # type-check (JSDoc + tsc)
 Tests use throwaway repositories in the temp folder and a local stand-in for the GitHub API; no test touches the
 network.
 
+How to contribute (a false alarm is the worst bug): [CONTRIBUTING.md](CONTRIBUTING.md). The threat model:
+[SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE)

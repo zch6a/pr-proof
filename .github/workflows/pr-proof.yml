@@ -20,3 +20,5 @@ jobs:
       - uses: ./
         with:
           mode: comment
+          # Its own maintainers' pull requests too: this repository is where pr-proof is tried end to end.
+          check-maintainers: "true"

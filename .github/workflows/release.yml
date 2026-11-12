@@ -1,0 +1,59 @@
+name: Release
+# On a version tag: test with a read-only token, then make the GitHub release (the version's CHANGELOG section) and
+# move the major tag (v0, v1, ...) to it, so workflows can use `zch6a/pr-proof@v0`. The job with write access runs
+# nothing of the project: it only calls git and gh. Actions are pinned to commits.
+on:
+  push:
+    tags: ["v*.*.*"]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - name: The tag is the package version
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm test
+      - name: Release notes from the CHANGELOG
+        run: node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" > notes.md
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: notes
+          path: notes.md
+          if-no-files-found: error
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: notes
+      - name: Release, and move the major tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          major="v${version%%.*}"
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --title "pr-proof $version" --notes-file notes.md --verify-tag --repo "$GITHUB_REPOSITORY"
+          fi
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq .object.sha)"
+          # An annotated tag points to a tag object: move the major tag to the commit it points to.
+          commit="$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq .object.sha 2>/dev/null || echo "$sha")"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$major" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$major" -f sha="$commit" -F force=true > /dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$major" -f sha="$commit" > /dev/null
+          fi
+          echo "released $GITHUB_REF_NAME; $major now points to ${commit:0:7}"
