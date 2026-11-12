@@ -40,3 +40,4 @@ The first version.
   runs, and a label (`needs-evidence`); `mode: summary` for a dry run. Skips maintainers and bots by default.
 - A command line (`npx -y github:zch6a/pr-proof description.md [--base REF] [--github OWNER/REPO]`).
 - No AI, no runtime dependencies; reads the base branch and the diff, runs nothing from the pull request.
+
