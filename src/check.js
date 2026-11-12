@@ -13,13 +13,14 @@ import { verify } from "./verify.js";
  *   owner?: string, repo?: string,
  *   lookups?: import("./verify.js").Lookups,
  *   isPull: boolean,
+ *   names?: boolean,
  * }} o
  */
 export async function check(o) {
   // The title is read on its own (its findings say "title"), so the body's line numbers are its own.
   const body = extractClaims(o.text);
   const claims = o.title ? merge(extractClaims(o.title, { lineOffset: 0 }), body) : body;
-  const result = await verify(claims, o.index, { changes: o.changes ?? null, owner: o.owner ?? "", repo: o.repo ?? "", lookups: o.lookups, isPull: o.isPull });
+  const result = await verify(claims, o.index, { changes: o.changes ?? null, owner: o.owner ?? "", repo: o.repo ?? "", lookups: o.lookups, isPull: o.isPull, names: o.names ?? true });
   return { claims, result, comment: renderComment(result, { subject: o.isPull ? "pull request" : "issue", sha: o.index.sha }) };
 }
 

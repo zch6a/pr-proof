@@ -46,11 +46,13 @@ function spellings(name) {
 /**
  * @param {Claims} claims
  * @param {RepoIndex} index the repository the text is about (for a pull request: its base)
- * @param {{changes?: Changes | null, owner: string, repo: string, lookups?: Lookups, isPull?: boolean}} context
+ * @param {{changes?: Changes | null, owner: string, repo: string, lookups?: Lookups, isPull?: boolean, names?: boolean}} context
+ *   names: whether file, function and option names are checked (the Action checks them in issues only when asked:
+ *   there they are mostly the reporter's own code, proposals, or names that were true when the issue was opened)
  * @returns {Promise<Result>}
  */
 export async function verify(claims, index, context) {
-  const { changes = null, owner, repo, lookups = {}, isPull = false } = context;
+  const { changes = null, owner, repo, lookups = {}, isPull = false, names = true } = context;
   /** @type {Unverified[]} */
   const unverified = [];
   /** @type {Record<string, number>} */
@@ -60,7 +62,10 @@ export async function verify(claims, index, context) {
   const where = changes ? "in this repository or in this pull request's changes" : "in this repository";
   const at = index.sha ? ` (at ${index.sha.slice(0, 7)})` : "";
 
-  for (const p of claims.paths) {
+  if (!names && (claims.paths.length || claims.symbols.length || claims.options.length)) {
+    notChecked.push("file, function and option names (in issues they are mostly the reporter's own code or proposals; `issue-names: true` checks them)");
+  }
+  for (const p of names ? claims.paths : []) {
     if (p.absolute) {
       // A frame from another machine: only its end can be this repository's file; if no tracked file ends like it,
       // it is a file of something else (the runtime, a dependency), not a claim about this repository.
@@ -76,7 +81,9 @@ export async function verify(claims, index, context) {
 
   // A name not in a partial index (or in a pull request whose large files have no patch) proves nothing.
   const namesComplete = index.complete && (!changes || changes.patchesComplete);
-  if (!namesComplete && (claims.symbols.length || claims.options.length)) {
+  if (!names) {
+    // left out above
+  } else if (!namesComplete && (claims.symbols.length || claims.options.length)) {
     notChecked.push(`function and option names (${index.incompleteBecause[0] ?? "a changed file has no patch: GitHub leaves out large and binary ones"})`);
   } else {
     const has = (/** @type {string} */ w) => index.words.has(w) || !!changes?.words.has(w);

@@ -68,7 +68,7 @@ test("against a repository: what exists is found, what does not is said, with th
   ].join("\n");
   const { result } = await check({ text, index: indexRepo(repo.dir), isPull: false });
   assert.deepEqual(result.unverified.map((u) => `${u.kind} ${u.said} @${u.line}`), ["path src/widget/tokens.py @3", "symbol refresh_token_cache() @3", "option --force-sync @3"]);
-  assert.equal(result.checked.paths, 3);
+  assert.equal(result.checked.paths, 2, "widget/sync.py is not checked: widget is not a top-level folder");
   assert.match(result.unverified.find((u) => u.kind === "path")?.detail ?? "", /No file or folder `src\/widget\/tokens\.py` in this repository \(at [0-9a-f]{7}\)\./);
 });
 

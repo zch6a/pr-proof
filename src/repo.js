@@ -143,7 +143,8 @@ export function changesOf(list) {
     if (TEST_CODE.test(patch)) c.testCode = true;
     if (DOC_COMMENT.test(patch)) c.docComments = true;
     for (const line of patch.split("\n")) {
-      if (!line.startsWith("+") || line.startsWith("+++")) continue;
+      // Added lines, and removed ones: a pull request that removes `oldName()` says so.
+      if (!/^[+-]/.test(line) || line.startsWith("+++") || line.startsWith("---")) continue;
       for (const m of line.matchAll(WORD)) c.words.add(m[0]);
       for (const m of line.matchAll(KEBAB)) c.kebab.add(m[0].toLowerCase());
       for (const m of line.matchAll(OPTION)) c.options.add(m[0]);
@@ -168,19 +169,17 @@ export function hasPath(index, path, changes) {
 }
 
 /**
- * Whether a path is plausibly about this repository: its first folder is a folder of the repository (at any depth) or
- * of the pull request. `kube/config`, `cue-lang/vscode-cue` or `react-dom/client` are not, and are left alone.
+ * Whether a path is plausibly about this repository: its first folder is a top-level folder of the repository or of
+ * the pull request. `kube/config`, `cue-lang/vscode-cue` or `react-dom/client` are not; nor is `src/index.js` in a
+ * monorepo whose `src` folders are inside packages (that is usually the reader's own project, as in a framework's
+ * documentation). Those are left alone.
  * @param {RepoIndex} index @param {string} path @param {Changes | null} [changes]
  */
 export function isRooted(index, path, changes) {
   const first = fold(path.split("/")[0] ?? "");
   if (!first) return false;
-  for (const d of index.dirs) if (d === first || d.endsWith(`/${first}`)) return true;
-  for (const f of [...(changes?.files ?? []), ...(changes?.removed ?? [])]) {
-    const parts = fold(f).split("/");
-    if (parts.slice(0, -1).includes(first)) return true;
-  }
-  return false;
+  if (index.dirs.has(first)) return true;
+  return [...(changes?.files ?? []), ...(changes?.removed ?? [])].some((f) => fold(f).split("/").length > 1 && fold(f).split("/")[0] === first);
 }
 
 /** Under a submodule: its files are not in this repository's index, so the path cannot be checked. @param {RepoIndex} index @param {string} path */

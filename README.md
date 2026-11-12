@@ -56,18 +56,21 @@ Skipped on purpose, because a contributor told that something true "could not be
 - negations, questions, offers and plans ("I didn't add tests", "should I add tests?", "I'll add tests later"),
   and reports of a test run ("all 456 tests pass");
 - names that are not about this repository: bare file names (`sample.txt` is usually the reader's own file),
-  slashed words (`and/or`, `react-dom/client`, `origin/main`), library names (`Node.js`), URLs, placeholders,
-  absolute and home paths, globs, ignored and generated files, and files in submodules;
+  slashed words (`and/or`, `react-dom/client`, `origin/main`), paths whose first folder is not a top-level folder
+  of the repository (in a monorepo, `src/index.js` is usually the reader's own project), library names (`Node.js`),
+  URLs, placeholders, absolute and home paths, globs, ignored and generated files, and files in submodules;
 - frames of dependencies and the runtime in stack traces (`site-packages`, `node_modules`, `/usr/lib`), and code in
   code blocks other than stack traces (a pasted snippet calls other people's code);
 - calls on standard libraries (`JSON.parse()`, `std::fs::read()`), options every framework adds (`--help`),
   colours (`#333` in a line about colours), ordinals ("step #1") and `#0`.
 
-**Measured** on 128 recently merged pull requests of seven projects (Flask, Express, HTTPie, bat, HTTPX, Vite,
-cobra), where nearly everything flagged would be a false alarm: 7 statements in 6 pull requests. Three are real (a
-description naming a file the pull request does not touch, "added unit tests" on a pull request that changes no test,
-a link to a pull request that does not exist), three say "fixes" for a pull request that was superseded, one is a
-function from a dependency. `scripts/precision.mjs` re-runs it against that baseline.
+**Measured** on 230 recently merged pull requests and 79 closed issues of eleven projects (Flask, Express, HTTPie,
+bat, HTTPX, Vite, cobra, OkHttp, Laravel, mdBook, Docusaurus: Python, JavaScript and TypeScript, Rust, Go, Kotlin and
+Java, PHP), where nearly everything flagged would be a false alarm: 9 statements in 8 pull requests, none in the
+issues. Three are real (a description naming a file the pull request does not touch, "added unit tests" on a pull
+request that changes no test, a link to a pull request that does not exist), five say "fixes" for a pull request
+(superseded and closed), one is a function from a dependency. Indexing took at most 5 seconds and 230 MB (Docusaurus,
+4,310 files). `scripts/precision.mjs` re-runs it against that baseline.
 
 ## What it never does
 
@@ -105,7 +108,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.3.0
+      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.4.0
         with:
           mode: summary # start with the job summary only; switch to "comment" when you like what it says
 ```
@@ -114,11 +117,17 @@ jobs:
 |---|---|---|
 | `mode` | `comment` | `comment`: one comment (edited on later runs) and the label. `summary`: only the job summary, a dry run |
 | `label` | `needs-evidence` | added while something is unverified, removed when everything checks out; empty for none |
+| `issue-names` | `false` | in issues, also check file, function and option names (see below) |
 | `check-maintainers` | `false` | also check owners, members and collaborators |
 | `fail-on-unverified` | `false` | fail the job when something could not be verified |
 | `github-token` | `${{ github.token }}` | reads the pull request's files and issues; writes the comment and label |
 
 Output: `unverified`, the number of statements that could not be verified.
+
+**In issues, names are not checked by default**, only references and advisories. Measured on closed issues of
+eleven projects, the file, function and option names in issues were mostly the reporter's own project ("in my app,
+`src/lib/bread.ts` …"), proposals ("it would be nice to have `--markdown-tables`") or names that were true when the
+issue was opened. `issue-names: true` checks them anyway (for a project that receives many invented bug reports).
 
 It works next to tools that look at how a pull request is made, such as [anti-slop](https://github.com/peakoss/anti-slop)
 (branch names, size, templates, account age): they check the form, pr-proof checks the facts.

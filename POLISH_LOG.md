@@ -111,3 +111,30 @@ Tests: 29 (was 16).
   real run), launch kit (`launch/pr-proof.md`, outside the repository).
 
 Tests: 33 (was 29).
+
+## Round 3 — 2026-11-12 (0.4.0): a fresh sample, issues, more languages
+
+- **The question:** round 1's fixes were made on the pull requests they were measured on. Do they hold on pull
+  requests they never saw, on issues (which round 1 did not measure at all), and in other languages? The precision
+  script now picks closed issues too (completed, by people), and four projects were added: OkHttp (Kotlin and Java),
+  Laravel (PHP), mdBook (Rust) and Docusaurus (a TypeScript monorepo).
+- **First run on the fresh sample:** 230 merged pull requests, 14 statements in 13; 156 closed issues, 9 in 8.
+  - Pull requests: the three known catches and the known dependency function; five "fixes" pointing to a closed,
+    superseded pull request (accurate); and four new false alarms: Docusaurus `static/assets/` and `src/index.js` (a
+    user's site, in documentation pull requests; the repository's `src` folders are all inside `packages/`), "Added the
+    test type-check command" (an adjective), and spf13/cobra#2063's `GetFlagCompletion()`, which the pull request says
+    it removes (the name was only on its removed lines, which were not read).
+  - Issues: nearly all false alarms, of kinds pull requests do not have: the reporter's own project (`src/lib/bread.ts`
+    in a Vite user's app, `tests/bootstrap.php`, a Docusaurus site's `i18n/de/...`), a proposal (bat: "add
+    `--markdown-tables`"), and names true when the issue was opened (httpie's issue #1, from 2012, names files long
+    gone). A repository's files are simply not what most issues are about.
+- **Fixed:** names in issues off by default (`issue-names: true` to check; the comment says so), a top-level first
+  folder for paths, removed lines read, "test" only as a noun. Each is a test (`test/round3.test.js`), next to the real
+  cases that must still be caught. The precision script picks issues from the last year only (an issue from 2012
+  against today's code says nothing about the tool).
+- **After:** 230 pull requests, 9 statements in 8 (three real, five accurate, one dependency function); 79 issues,
+  none. Indexing: 0.2 to 5.6 seconds and at most 230 MB per repository (Docusaurus, 4,310 files), fine for an Action
+  that runs on every edit.
+- Also: the script now checks the title on its own, as the Action does (it still prepended it to the body).
+
+Tests: 37 (was 33).

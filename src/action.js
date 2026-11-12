@@ -67,6 +67,8 @@ export async function run() {
     title: subject.title ?? "",
     text: subject.body ?? "",
     index, changes, owner, repo, isPull,
+    // Names in issues only when asked: in real issues they are mostly the reporter's own code or proposals.
+    names: isPull || input("issue-names", "false") === "true",
     lookups: { ref: (o, r, n) => gh.ref(o, r, n), advisory: (id) => gh.advisory(id) },
   });
   const count = result.unverified.length;

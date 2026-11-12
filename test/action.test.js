@@ -90,19 +90,22 @@ test("quiet when everything checks out and there was no comment; maintainers and
   assert.ok(!gh.requests.slice(before).some((/** @type {any} */ q) => q.method !== "GET"), "summary mode writes nothing");
 });
 
-test("an issue: names checked against the default branch, references through the API", async (t) => {
+test("an issue: references and advisories by default; names only with issue-names: true", async (t) => {
   const repo = makeRepo(PROJECT);
   const gh = /** @type {any} */ (await fakeGithub({ issues: {}, cves: ["CVE-2024-3094"] }));
   t.after(() => { gh.close(); repo.cleanup(); });
   const event = { action: "opened", issue: { number: 8, title: "Crash", body: "Since #77, `Cache.flush_all()` crashes (CVE-2024-3094, CVE-2025-99999).", user: { type: "User" }, author_association: "NONE" } };
   const r = /** @type {any} */ (await runAction({ event, name: "issues", workspace: repo.dir, api: gh.url }));
   assert.equal(r.code, 0, r.out);
-  assert.match(r.outputs, /unverified=3/);
+  assert.match(r.outputs, /unverified=2/);
   const comment = gh.requests.find((/** @type {any} */ q) => q.method === "POST" && q.url.endsWith("/issues/8/comments"))?.body.body ?? "";
-  assert.match(comment, /flush_all/);
   assert.match(comment, /#77/);
   assert.match(comment, /CVE-2025-99999/);
-  assert.doesNotMatch(comment, /CVE-2024-3094 in the CVE list/);
+  assert.doesNotMatch(comment, /CVE-2024-3094 is not/);
+  assert.doesNotMatch(comment, /flush_all/, "names in issues are not checked by default");
+  assert.match(comment, /issue-names: true/, "and the comment says how to check them");
+  const withNames = /** @type {any} */ (await runAction({ event: { ...event, action: "edited" }, name: "issues", workspace: repo.dir, api: gh.url, inputs: { "issue-names": "true" } }));
+  assert.match(withNames.outputs, /unverified=3/);
 });
 
 test("without a checkout it says what to add, and fails", async (t) => {

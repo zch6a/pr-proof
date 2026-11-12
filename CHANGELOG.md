@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 — 2026-11-12
+
+Polishing round 3: a fresh sample, issues, more languages. The precision run now covers eleven projects and closed
+issues as well as merged pull requests (`scripts/precision.mjs` picks both); on it, before this round, 14 statements
+were flagged in 230 merged pull requests and 9 in 156 issues. Now 9 in 8 pull requests (three real, five accurate,
+one dependency function) and none in 79 issues from the last year.
+
+- **Issues: names are not checked by default.** In real issues, file, function and option names were the reporter's
+  own project (`src/lib/bread.ts` in a Vite user's app, `tests/bootstrap.php` in a Laravel app), proposals ("it would
+  be nice to have `--markdown-tables`") or names that were true when the issue was opened. References and advisories
+  are still checked; `issue-names: true` checks names too.
+- **A path's first folder must be a top-level folder** of the repository or the pull request: in a monorepo whose
+  `src` folders are inside packages, `src/index.js` in a documentation pull request is the reader's own site.
+- **A pull request that removes a function names it on its removed lines**: those count (spf13/cobra#2063 says it
+  removes `GetFlagCompletion()`).
+- **"Test" as an adjective is not a claim of adding tests** ("the test type-check command"); "a test", "test cases"
+  and "tests" are.
+- The precision run reports index time and memory per repository, and checks the title on its own as the Action does.
+
 ## 0.3.0 — 2026-11-12
 
 Polishing round 2.

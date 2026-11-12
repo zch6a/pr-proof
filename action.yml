@@ -11,6 +11,9 @@ inputs:
   label:
     description: Label added while something is unverified and removed when everything checks out; empty for none
     default: needs-evidence
+  issue-names:
+    description: In issues, also check the file, function and option names (off by default: in issues they are mostly the reporter's own project or proposals; references and advisories are always checked)
+    default: "false"
   check-maintainers:
     description: Also check pull requests and issues by owners, members and collaborators
     default: "false"
