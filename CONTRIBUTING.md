@@ -5,6 +5,9 @@ A wrong comment wrongs a contributor.
 
 ## A false alarm is the worst bug
 
+Seen one? [Report it](https://github.com/zch6a/pr-proof/issues/new?template=false-alarm.yml) with the sentence and the row of the comment: that is the most useful issue
+this project gets.
+
 Telling someone that a true statement "could not be verified" is worse than missing a false one. So:
 
 - **When unsure, do not report.** A mention that may not be about this repository (a bare file name, a slashed

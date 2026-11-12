@@ -34,6 +34,8 @@ the checking, and leaves this (real output, on the test project):
 > | Tests (line 4) | `This also adds regression tests.` | It says it adds tests, but none of the changed files is a test file, and no added line is a test. |
 >
 > If these are right (a function from a dependency, an issue in another tracker), a link or a line of explanation is all that is needed. This is a check of facts, not a judgement of the contribution or of how it was written.
+>
+> <sub>Checked 1 file, 1 function, 1 option, 1 reference and 1 statement about tests or docs against ffadaa6. [pr-proof](https://github.com/zch6a/pr-proof) runs no AI and nothing from the pull request.</sub>
 
 When the author fixes the description or the code, the next run edits the same comment to say everything checked out
 and takes the label off. Both are tried on GitHub itself: [pull request #1](https://github.com/zch6a/pr-proof/pull/1)
@@ -112,7 +114,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.5.0
+      - uses: zch6a/pr-proof@v1 # or a release, e.g. @v1.0.0
         with:
           mode: summary # start with the job summary only; switch to "comment" when you like what it says
 ```
@@ -147,7 +149,10 @@ npx -y github:zch6a/pr-proof description.md --base origin/main  # as a pull requ
 npx -y github:zch6a/pr-proof issue.md --github owner/repo       # also issue references and CVE ids (network)
 ```
 
-Exit code 0 when everything checked was found, 1 when something could not be verified.
+Exit code 0 when everything checked was found, 1 when something could not be verified, 2 for a usage error.
+
+What stays the same in every 1.x release (the inputs, the comment, the exit codes, the JSON):
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Limits
 
@@ -157,8 +162,8 @@ Exit code 0 when everything checked was found, 1 when something could not be ver
 - Function and option names are checked only when the whole repository (up to 300 MB of text; source files up to
   16 MB, UTF-8 or UTF-16) and the whole diff could be read; otherwise they are listed as not checked, never as
   missing (also for a pull request of more than 3,000 files, which is all the API lists). References and advisories
-  that could not be looked up (rate limits, a repository the token cannot see)
-  are listed as not checked too.
+  that could not be looked up (rate limits, a repository the token cannot see) are listed as not checked too, and
+  so are those past the first 30 references and 30 advisory ids of a text.
 - "Adds tests" and "updates the docs" are recognised in English, and test and documentation files by their names and
   folders (`tests/`, `*.test.ts`, `test_*.py`, `*_test.go`, `docs/`, `README`, `*.md`).
 - The command line reads committed and staged files (`git ls-files`); a new file is found once it is added.
@@ -183,7 +188,8 @@ npm run check   # type-check (JSDoc + tsc)
 Tests use throwaway repositories in the temp folder and a local stand-in for the GitHub API; no test touches the
 network.
 
-How to contribute (a false alarm is the worst bug): [CONTRIBUTING.md](CONTRIBUTING.md). The threat model:
+How to contribute (a false alarm is the worst bug, so [report one](https://github.com/zch6a/pr-proof/issues/new?template=false-alarm.yml) when you see it):
+[CONTRIBUTING.md](CONTRIBUTING.md). The threat model:
 [SECURITY.md](SECURITY.md).
 
 ## License

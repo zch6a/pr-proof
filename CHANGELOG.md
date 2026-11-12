@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0 — 2026-11-12
+
+Polishing round 5, the last of the first cycle: what 1.x keeps stable is written down and tested.
+
+- **`docs/COMPATIBILITY.md`**: the Action's inputs and defaults, its output, the events it
+  answers, the comment's marker and kinds, when the job fails, what it reads and sends; the command line's options,
+  exit codes and JSON fields; and what may still change in 1.x (what counts as a claim, the wording, `src/`).
+  `test/contract.test.js` checks the page against `action.yml`, the code and the command line's real output.
+- **Use `zch6a/pr-proof@v1`.** Nothing changes from 0.5.0 for a workflow; `@v0` stays at 0.5.0.
+- **The README's example is now tested**: it is regenerated from the test project and compared line by line, in both
+  languages. That found the Chinese README's example missing the comment's last two paragraphs, and the Chinese
+  README's limits saying "files up to 1 MB" where the code (and the English README) say source files up to 16 MB.
+  Both fixed, the footer of the comment is now shown too, and the limits both READMEs state (300 MB, 16 MB, 3,000
+  files, 30 lookups) are compared with the code.
+- Documented what was not: references and advisory ids past the first 30 of a text are listed as not checked; the
+  command line's exit code 2.
+- **An issue form for false alarms** (`.github/ISSUE_TEMPLATE/false-alarm.yml`), linked from the README and
+  CONTRIBUTING.
+- `action.yml`'s description shortened for the Marketplace listing.
+
 ## 0.5.0 — 2026-11-12
 
 Polishing round 4: a second independent review, and an ignore list.

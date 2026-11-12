@@ -1,5 +1,5 @@
 name: pr-proof
-description: Checks what a pull request or issue says against the repository (files, functions, options, issues, advisories, "adds tests"). No AI; states facts, asks for evidence.
+description: Checks what a pull request or issue says (files, functions, options, issues, CVEs, "adds tests") against the repository. No AI.
 author: zch6a
 branding:
   icon: check-square

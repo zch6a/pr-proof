@@ -26,6 +26,10 @@
 > | Function (line 3) | `refresh_token_cache()` | The name `refresh_token_cache` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
 > | Option (line 4) | `--force-sync` | The option `--force-sync` appears nowhere in this repository or in this pull request's changes (at ffadaa6). |
 > | Tests (line 4) | `This also adds regression tests.` | It says it adds tests, but none of the changed files is a test file, and no added line is a test. |
+>
+> If these are right (a function from a dependency, an issue in another tracker), a link or a line of explanation is all that is needed. This is a check of facts, not a judgement of the contribution or of how it was written.
+>
+> <sub>Checked 1 file, 1 function, 1 option, 1 reference and 1 statement about tests or docs against ffadaa6. [pr-proof](https://github.com/zch6a/pr-proof) runs no AI and nothing from the pull request.</sub>
 
 作者改好描述或代码之后，下一次运行会把同一条评论改成“全部核对通过”，并去掉标签。这两点都在 GitHub 上真实跑过：本仓库的 [PR #1](https://github.com/zch6a/pr-proof/pull/1) 和 [issue #2](https://github.com/zch6a/pr-proof/issues/2)。
 
@@ -80,12 +84,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0 # 或者某个发布版，比如 @v0.5.0
+      - uses: zch6a/pr-proof@v1 # 或者某个发布版，比如 @v1.0.0
         with:
           mode: summary # 先只写任务摘要；觉得说得对了再改成 "comment"
 ```
 
-输入项、输出项和命令行用法见 [English README](README.md#use)。`ignore` 可以列出永远不核对的名字（依赖库的函数、别的工具的选项、生成的路径，`*` 匹配任意字符），一行一个或用逗号分隔。
+输入项、输出项和命令行用法见 [English README](README.md#use)。`ignore` 可以列出永远不核对的名字（依赖库的函数、别的工具的选项、生成的路径，`*` 匹配任意字符），一行一个或用逗号分隔。1.x 的每个版本都保持不变的东西（输入项、评论、退出码、JSON）见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)。
 
 **issue 里默认不核对名字**，只核对引用和安全公告。在 11 个项目已关闭的 issue 上实测：issue 里提到的文件、函数、选项大多是报告者自己的项目（“在我的应用里，`src/lib/bread.ts` ……”）、功能建议（“希望能有 `--markdown-tables`”），或者在开 issue 时是对的、后来改掉了的名字。`issue-names: true` 可以照样核对（适合收到大量编造 bug 报告的项目）。
 
@@ -93,10 +97,13 @@ jobs:
 
 ## 局限
 
-- **依赖库里的函数会被报出来。** 仓库里只要哪里出现过 `get`，`requests.get()` 就算找到（通常都会出现）；只有依赖库才有的函数找不到。评论里写了怎么回应。
-- 只有在整个仓库（文本最多 300 MB、单个文件最多 1 MB）和整个 diff 都读完时才核对函数和选项名；否则列为“未核对”，绝不说成“不存在”。
+- **依赖库里的函数会被报出来。** 仓库里只要哪里出现过 `get`，`requests.get()` 就算找到（通常都会出现）；只有依赖库才有的函数找不到。评论里写了怎么回应，`ignore` 可以永久排除这类名字。
+- 只有在整个仓库（文本最多 300 MB；源文件最多 16 MB，UTF-8 或 UTF-16）和整个 diff 都读完时才核对函数和选项名；否则列为“未核对”，绝不说成“不存在”。超过 3,000 个文件的 PR（API 最多只列这么多）也一样。
+- 一段文字最多查 30 个引用和 30 个安全公告编号，其余的列为“未核对”。
 - “加了测试”“更新了文档”目前只识别英文；测试和文档文件按文件名和目录识别。
 - 引用了 token 看不到的仓库里的 issue，不核对。只支持 GitHub 上的仓库。
+
+误报是最严重的 bug：看到了请[告诉我们](https://github.com/zch6a/pr-proof/issues/new?template=false-alarm.yml)。参与开发见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证
 

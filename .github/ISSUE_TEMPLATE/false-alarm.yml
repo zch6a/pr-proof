@@ -1,0 +1,37 @@
+name: A false alarm
+description: pr-proof said something true could not be verified
+labels: [false-alarm]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks: a false alarm wrongs a contributor, so it is the bug fixed first. Please leave out anything private.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release in the workflow (`zch6a/pr-proof@v1` is the latest 1.x), or `pr-proof --version`.
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: sentence
+    attributes:
+      label: The sentence
+      description: The line of the pull request or issue that was flagged, as written (or a link to it, if it is public).
+    validations:
+      required: true
+  - type: textarea
+    id: row
+    attributes:
+      label: The row of the comment
+      description: What pr-proof wrote about it ("Says" and "Checked").
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is true
+      description: Where the file, function or option is, or what the statement meant.
+    validations:
+      required: true

@@ -170,3 +170,53 @@ Tests: 37 (was 33).
   not touch; five "fixes" pointing to a closed pull request; one dependency function); 79 closed issues: none.
 
 Tests: 52 (was 37).
+
+## Round 5 — 2026-11-12 (1.0.0): the last round of the first cycle
+
+- **A compatibility promise** (`docs/COMPATIBILITY.md`): what a workflow and a script can rely on in every 1.x release
+  (inputs and defaults, the output, events, the comment's marker and kinds, when the job fails, what is read and
+  sent; the command line's options, exit codes, JSON fields), and what is free to change (what counts as a claim,
+  wording, `src/`). `test/contract.test.js` reads the page and compares it with `action.yml`, the source and the
+  command line's real output, so the page cannot drift.
+- **Every claim in the README checked against output.** The example comment is regenerated from the test project
+  and compared line by line with both READMEs. Found: the Chinese README's example stopped after the table (it left
+  out the "a link or a line of explanation" paragraph, the part that matters most to a contributor), and its limits
+  said "single files up to 1 MB" (non-source text; the limit for source files has been 16 MB since round 1, as the
+  English one says). The footer of the comment is shown now too, so "real output" is the whole output. Also
+  documented what was silently true: lookups stop at 30 references and 30 advisory ids per text (the rest are "not
+  checked"), and the command line's exit code 2.
+- Checked by hand: no API newer than Node 20 in `src/` (CI runs 20 and 24 on three systems); the pinned actions and
+  the release workflow unchanged since 0.5.0 (which released correctly, and moves the major tag: `@v1` from now on).
+- **An issue form for false alarms**, because a false alarm is the bug that matters most and the one users are least
+  likely to report without being asked. The README and CONTRIBUTING link to it.
+- `action.yml`'s description shortened (Marketplace listings show a short line).
+
+Tests: 57 (was 52).
+
+## Summary
+
+pr-proof checks what a pull request or issue says against the repository: the files, functions and options it names,
+the issues it references, "fixes" pointing to an issue, CVE and GHSA ids, "adds tests" with tests. It comments with
+what it could not verify and asks for a link or a line of explanation. No AI, no judgement, nothing from the pull
+request run.
+
+What mattered most, in hindsight:
+- **A false alarm wrongs a person.** Most of the work was not catching more but flagging less: templates,
+  checkboxes, negations, plans, test-run reports, copied release notes, other trackers, someone else's code in a
+  stack trace, the reporter's own project in an issue. Absence is reported only when it proves something.
+- **Measuring on real projects, and correcting myself.** The precision run (230 merged pull requests and 79 issues of
+  eleven projects) turned "it seems quiet" into a number, and in round 4 showed that two of the three "real catches"
+  I had announced were copied release notes. The number went down, and the README, changelog, logs and launch drafts
+  were corrected.
+- **Two reviews by someone who had not written it** found what my tests could not, because they shared my
+  assumptions: Rust and shell paths never checked at all, a quadratic regular expression on contributor-controlled
+  text, red checks blaming contributors for GitHub's outages, two comments from two quick runs.
+- **Safe under `pull_request_target`** by construction: the base branch and the API's diff, never the pull request's
+  code; text from the contribution can neither mention anyone nor break the comment.
+
+Rounds: development (0.1, 16 tests) → 1 review, precision run (0.2, 29) → 2 tried end to end on GitHub, releases (0.3, 33) →
+3 a fresh sample with issues and eleven projects (0.4, 37) → 4 a second review, `ignore`, the correction (0.5, 52) →
+5 compatibility promise, README checked against output (1.0, 57).
+
+Still open: a GitHub Marketplace listing and the social preview (the owner's to do); statements in languages other
+than English; GitHub Enterprise's advisory database.
