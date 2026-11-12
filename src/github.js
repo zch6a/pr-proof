@@ -72,10 +72,12 @@ export function client(o = {}) {
       const all = [];
       for (let page = 1; page <= 30; page++) {
         const r = await call(`/repos/${owner}/${repo}/pulls/${number}/files?per_page=100&page=${page}`);
-        if (r.status !== 200 || !Array.isArray(r.body)) throw new Error(`GitHub answered ${r.status} for the pull request's files`);
+        if (r.status !== 200 || !Array.isArray(r.body)) throw Object.assign(new Error(`GitHub answered ${r.status} for the pull request's files`), { readFailed: true });
         all.push(...r.body);
-        if (r.body.length < 100) break;
+        if (r.body.length < 100) return all;
       }
+      // The API lists at most 3,000 files: past that, the changes are not whole (a file with no patch says so).
+      all.push({ filename: "(more files than the API lists)", status: "modified" });
       return all;
     },
     /** @param {string} owner @param {string} repo @param {number} number @returns {Promise<import("./verify.js").RefState>} */
@@ -126,7 +128,8 @@ export function client(o = {}) {
     async findComment(owner, repo, number, marker) {
       for (let page = 1; page <= 10; page++) {
         const r = await call(`/repos/${owner}/${repo}/issues/${number}/comments?per_page=100&page=${page}`);
-        if (r.status !== 200 || !Array.isArray(r.body)) return null;
+        // Not knowing whether there is a comment is not "there is none": that would post a second one.
+        if (r.status !== 200 || !Array.isArray(r.body)) throw Object.assign(new Error(`GitHub answered ${r.status} for the comments`), { readFailed: true });
         const me = await login();
         const mine = r.body.find((c) => typeof c.body === "string" && c.body.startsWith(marker) && (c.user?.type === "Bot" || (me !== null && c.user?.login === me)));
         if (mine) return /** @type {{id: number, body: string}} */ (mine);
@@ -136,10 +139,10 @@ export function client(o = {}) {
     },
     /** @param {string} owner @param {string} repo @param {number} number @param {string} body @param {number | undefined} existing */
     async writeComment(owner, repo, number, body, existing) {
-      const r = existing
-        ? await call(`/repos/${owner}/${repo}/issues/comments/${existing}`, { method: "PATCH", body: { body } })
-        : await call(`/repos/${owner}/${repo}/issues/${number}/comments`, { method: "POST", body: { body } });
-      if (r.status === 403 || r.status === 401) throw Object.assign(new Error(`GitHub answered ${r.status} when writing the comment: the token cannot write here (a pull_request event from a fork has a read-only token; use pull_request_target, and give the job issues: write and pull-requests: write)`), { readOnly: true });
+      let r = existing ? await call(`/repos/${owner}/${repo}/issues/comments/${existing}`, { method: "PATCH", body: { body } }) : null;
+      // Deleted since it was found: write a new one.
+      if (!r || r.status === 404) r = await call(`/repos/${owner}/${repo}/issues/${number}/comments`, { method: "POST", body: { body } });
+      if (r.status === 403 || r.status === 401) throw Object.assign(new Error(`GitHub answered ${r.status} when writing the comment: the conversation is locked, or the token cannot write here (a pull_request event from a fork has a read-only token; use pull_request_target, and give the job issues: write and pull-requests: write)`), { readOnly: true });
       if (r.status !== 200 && r.status !== 201) throw new Error(`GitHub answered ${r.status} when writing the comment`);
     },
     /** @param {string} owner @param {string} repo @param {number} number @param {string} label @param {boolean} on */

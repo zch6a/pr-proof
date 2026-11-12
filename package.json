@@ -1,6 +1,6 @@
 {
   "name": "pr-proof",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "A GitHub Action for maintainers that checks what a pull request or issue says against the repository: the files, functions and options it names exist, the issues it references are real, \"adds tests\" comes with tests. No AI; it states facts and asks for evidence.",
   "keywords": [

@@ -62,13 +62,24 @@ export async function run() {
   const gh = client({ token: input("github-token", env.GITHUB_TOKEN ?? ""), api: env.GITHUB_API_URL, cveApi: env.PR_PROOF_CVE_API });
 
   const index = indexRepo(workspace);
-  const changes = isPull ? changesOf(await gh.pullFiles(owner, repo, subject.number)) : null;
+  let changes = null;
+  if (isPull) {
+    try {
+      changes = changesOf(await gh.pullFiles(owner, repo, subject.number));
+    } catch (e) {
+      // GitHub did not answer (an outage, a rate limit): nothing to check against, and nothing the contributor did.
+      console.log(`::warning::pr-proof: could not read the pull request's files (${/** @type {Error} */ (e).message}); nothing was checked.`);
+      summary(`pr-proof could not read the pull request's files (${/** @type {Error} */ (e).message}); nothing was checked.`);
+      return;
+    }
+  }
   const { result, comment } = await check({
     title: subject.title ?? "",
     text: subject.body ?? "",
     index, changes, owner, repo, isPull,
     // Names in issues only when asked: in real issues they are mostly the reporter's own code or proposals.
     names: isPull || input("issue-names", "false") === "true",
+    ignore: input("ignore", "").split(/[\n,]/),
     lookups: { ref: (o, r, n) => gh.ref(o, r, n), advisory: (id) => gh.advisory(id) },
   });
   const count = result.unverified.length;
@@ -80,21 +91,23 @@ export async function run() {
     if (count && input("fail-on-unverified", "false") === "true") process.exitCode = 1;
     return;
   }
+  // The comment and the label are written independently: a locked conversation refuses the comment, not the label.
+  // A failure here is the workflow's setup or GitHub's, never the contributor's: a warning, and the summary has it all.
+  const warn = (/** @type {unknown} */ e) => {
+    const flags = /** @type {{readOnly?: boolean, readFailed?: boolean}} */ (e);
+    if (flags.readOnly || flags.readFailed) console.log(`::warning::pr-proof: ${/** @type {Error} */ (e).message}`);
+    else throw e;
+  };
   try {
     const previous = await gh.findComment(owner, repo, subject.number, MARKER);
-    if (count) {
-      await gh.writeComment(owner, repo, subject.number, comment, previous?.id);
-      if (label) await gh.setLabel(owner, repo, subject.number, label, true);
-    } else {
-      // Fixed since the last run: say so in the same place. The label comes off whether or not the comment is still there.
-      if (previous) await gh.writeComment(owner, repo, subject.number, renderComment(result, { subject: isPull ? "pull request" : "issue", sha: index.sha }), previous.id);
-      if (label) await gh.setLabel(owner, repo, subject.number, label, false);
-    }
-  } catch (e) {
-    // A token that cannot write is the workflow's setup, not the contributor's doing: a warning, and the summary has it all.
-    if (/** @type {{readOnly?: boolean}} */ (e).readOnly) console.log(`::warning::pr-proof: ${/** @type {Error} */ (e).message}`);
-    else throw e;
-  }
+    if (count) await gh.writeComment(owner, repo, subject.number, comment, previous?.id);
+    // Fixed since the last run: say so in the same place.
+    else if (previous) await gh.writeComment(owner, repo, subject.number, renderComment(result, { subject: isPull ? "pull request" : "issue", sha: index.sha }), previous.id);
+  } catch (e) { warn(e); }
+  try {
+    // The label comes off whether or not the comment is still there.
+    if (label) await gh.setLabel(owner, repo, subject.number, label, count > 0);
+  } catch (e) { warn(e); }
   if (count && input("fail-on-unverified", "false") === "true") process.exitCode = 1;
 }
 

@@ -138,3 +138,35 @@ Tests: 33 (was 29).
 - Also: the script now checks the title on its own, as the Action does (it still prepended it to the body).
 
 Tests: 37 (was 33).
+
+## Round 4 — 2026-11-12 (0.5.0): a second review, an ignore list
+
+- **`ignore`**, for the false alarm that is left by design: a function only a dependency has (`recv_method_line()`
+  from h11 on encode/httpx). One line in the workflow instead of the same answer on every pull request.
+- **A second independent review** (someone who had not written it; no network; the repository untouched) tried pull
+  request and issue texts in the styles of many ecosystems and found, confirmed by running each: false alarms in the
+  tests/docs statements (existing tests, removals, template answers, test ids and plans, CI speed, copied release
+  notes, `<blockquote>`, status marks), tests and docs it did not recognise (Rust attributes, C# `[Fact]`, `test-d.ts`,
+  Perl `t/`, edits inside docstrings, Go doc comments, towncrier fragments), link text taken for this repository's
+  issues, other trackers' numbers, PHP and gdb frames written as prose, names in links to other projects, standard
+  libraries of Java/C#/PHP/Swift, git/npm/pip options, the reporter's own stack frames, indented fences, an unclosed
+  comment; **real problems it missed**: every path ending in `.rs` or `.sh` (a rule meant for bare library names
+  like `docs.rs` also dropped `src/main.rs`, so Rust repositories had no path checks at all), extensions it did not
+  know, closing keywords through a link or in bold; in the Action, red checks when GitHub fails, a second comment
+  after a failed listing or two quick runs, a deleted comment failing the job, a locked conversation blocking the
+  label, the 3,000-file cap of the API read as complete; a **quadratic** regular expression (`KEBAB`: 28 s on a
+  256 KB line, in patches a contributor controls); quotes of statements with their code blanked out; `--base` broken
+  by `diff.noprefix`; and documentation gaps (no `ignore` row, 80 claims instead of 40, missing API calls). All fixed,
+  each in `test/review2.test.js` (12 tests).
+- My own: the new sentence splitter cut `utils.compileETag` into two sentences, and my doc-comment pattern took any
+  `# comment` for documentation; both caught by the existing tests.
+- **A correction of rounds 1 and 3.** Re-running the precision check after these fixes, two of the "real catches"
+  on expressjs/express#7468 disappeared. Reading the pull request: it is a release, and its body is the copied
+  release notes of dozens of other pull requests; "test: added unit tests for utils.compileETag" is the note of
+  #6534, by another author. That was never this pull request's claim: the round 1 count of three real catches was
+  wrong, and the README said so twice. Copied notes are now left alone (and so is "made their first contribution
+  in", where the third item came from; that link really is dead). README, changelog and this log corrected.
+- **After:** 230 merged pull requests: 7 statements in 7 (one real catch: #7112 names a file the pull request does
+  not touch; five "fixes" pointing to a closed pull request; one dependency function); 79 closed issues: none.
+
+Tests: 52 (was 37).

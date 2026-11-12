@@ -42,7 +42,7 @@
 
 有意跳过（把真实存在的东西说成“无法核实”，会冤枉贡献者）：HTML 注释（PR 模板把说明放在里面）、引用的回复、模板里的复选框（勾没勾都不算作者本人的说法）；否定、提问、表态和计划（“我没加测试”“要不要加测试？”“之后再补测试”），以及测试运行结果（“全部 456 个测试通过”）；不属于这个仓库的名字：不带目录的文件名（`sample.txt` 通常是读者自己的文件）、带斜杠的普通词（`and/or`、`react-dom/client`、`origin/main`）、库名（`Node.js`）、网址、占位符、绝对路径和家目录路径、通配符、被忽略或生成的文件、子模块里的文件；堆栈信息里依赖库和运行时的帧（`site-packages`、`node_modules`、`/usr/lib`），以及代码块里除堆栈信息以外的代码；标准库的调用（`JSON.parse()`）、所有框架都自带的选项（`--help`）、颜色（讲颜色的那一行里的 `#333`）、序号（“step #1”）和 `#0`。
 
-**实测**：在 11 个项目（Flask、Express、HTTPie、bat、HTTPX、Vite、cobra、OkHttp、Laravel、mdBook、Docusaurus：Python、JavaScript/TypeScript、Rust、Go、Kotlin/Java、PHP）最近合并的 230 个 PR 和 79 个已关闭的 issue 上运行（合并过的 PR 里被报出来的几乎都是误报），一共只报了 8 个 PR 里的 9 条，issue 里一条也没有：3 条是真问题（描述里写的文件 PR 根本没碰、说“加了单元测试”却没改任何测试、链接的 PR 不存在），5 条是用 “fixes” 指向了一个（被取代、已关闭的）PR，1 条是依赖库里的函数。建索引最多 5 秒、230 MB（Docusaurus，4,310 个文件）。`scripts/precision.mjs` 可以对照这个基线重跑。
+**实测**：在 11 个项目（Flask、Express、HTTPie、bat、HTTPX、Vite、cobra、OkHttp、Laravel、mdBook、Docusaurus：Python、JavaScript/TypeScript、Rust、Go、Kotlin/Java、PHP）最近合并的 230 个 PR 和 79 个已关闭的 issue 上运行（合并过的 PR 里被报出来的几乎都是误报），一共只报了 7 个 PR 里的 7 条，issue 里一条也没有：1 条是真问题（描述里把一个 PR 根本没碰的文件写成问题所在），5 条是用 “fixes” 指向了一个（被取代、已关闭的）PR，1 条是依赖库里的函数（可以用 `ignore` 排除）。建索引最多 6.4 秒、230 MB（Docusaurus，4,310 个文件）。`scripts/precision.mjs` 可以对照这个基线重跑。
 
 ## 它绝不做的事
 
@@ -68,6 +68,10 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+# 每个 PR 或 issue 同一时间只跑一个（刚打开就编辑，两次运行会抢着写评论）。
+concurrency:
+  group: pr-proof-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -76,12 +80,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0 # 或者某个发布版，比如 @v0.4.0
+      - uses: zch6a/pr-proof@v0 # 或者某个发布版，比如 @v0.5.0
         with:
           mode: summary # 先只写任务摘要；觉得说得对了再改成 "comment"
 ```
 
-输入项、输出项和命令行用法见 [English README](README.md#use)。
+输入项、输出项和命令行用法见 [English README](README.md#use)。`ignore` 可以列出永远不核对的名字（依赖库的函数、别的工具的选项、生成的路径，`*` 匹配任意字符），一行一个或用逗号分隔。
 
 **issue 里默认不核对名字**，只核对引用和安全公告。在 11 个项目已关闭的 issue 上实测：issue 里提到的文件、函数、选项大多是报告者自己的项目（“在我的应用里，`src/lib/bread.ts` ……”）、功能建议（“希望能有 `--markdown-tables`”），或者在开 issue 时是对的、后来改掉了的名字。`issue-names: true` 可以照样核对（适合收到大量编造 bug 报告的项目）。
 

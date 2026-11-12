@@ -29,13 +29,15 @@ Usage:
   --base REF            read it as a pull request: what changed since REF counts, and "adds tests" is checked
   --github OWNER/REPO   also check issue references and CVE/GHSA ids (asks the GitHub API and the CVE list;
                         uses GITHUB_TOKEN if set)
+  --ignore NAMES        names not to check, separated by commas ("*" matches any characters)
   --json                the result as JSON
 
 Exit code: 0 everything checked was found, 1 something could not be verified, 2 usage or other errors.`;
 
 /** A local diff as the GitHub API lists changed files. @param {string} repo @param {string} base */
 function localChanges(repo, base) {
-  const diff = execFileSync("git", ["-c", "core.quotepath=off", "diff", "--no-color", "--find-renames", `${base}...HEAD`], { cwd: repo, encoding: "utf8", maxBuffer: 512 * 1024 * 1024 });
+  // Fixed prefixes and no external diff or text conversion, whatever the user's git configuration says.
+  const diff = execFileSync("git", ["-c", "core.quotepath=off", "diff", "--no-color", "--no-ext-diff", "--no-textconv", "--src-prefix=a/", "--dst-prefix=b/", "--find-renames", `${base}...HEAD`], { cwd: repo, encoding: "utf8", maxBuffer: 512 * 1024 * 1024 });
   /** @type {import("./repo.js").ChangedFile[]} */
   const files = [];
   for (const part of diff.split(/^diff --git /m).slice(1)) {
@@ -53,7 +55,7 @@ function localChanges(repo, base) {
 export async function main(argv) {
   let args;
   try {
-    args = parseArgs({ args: argv, allowPositionals: true, options: { repo: { type: "string" }, base: { type: "string" }, github: { type: "string" }, json: { type: "boolean" }, help: { type: "boolean", short: "h" }, version: { type: "boolean", short: "v" } } });
+    args = parseArgs({ args: argv, allowPositionals: true, options: { repo: { type: "string" }, base: { type: "string" }, ignore: { type: "string" }, github: { type: "string" }, json: { type: "boolean" }, help: { type: "boolean", short: "h" }, version: { type: "boolean", short: "v" } } });
   } catch (e) {
     process.stderr.write(`${e instanceof Error ? e.message : e}\n\n${HELP}\n`);
     return 2;
@@ -75,6 +77,7 @@ export async function main(argv) {
       changes: base ? changesOf(localChanges(repo, base)) : null,
       owner, repo: name,
       isPull: !!base,
+      ignore: (args.values.ignore ?? "").split(","),
       lookups: gh ? { ref: (o, r, n) => gh.ref(o, r, n), advisory: (id) => gh.advisory(id) } : {},
     });
     process.stdout.write(args.values.json ? `${JSON.stringify({ version: VERSION, claims, ...result }, null, 2)}\n` : `${comment.replace(MARKER, "").trim()}\n`);

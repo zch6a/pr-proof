@@ -76,8 +76,9 @@ test("stack traces from another machine and from dependencies", async (t) => {
   t.after(repo.cleanup);
   const text = ["```", 'File "/app/src/widget/sync.py", line 1, in sync_items', 'File "/app/.venv/lib/python3.12/site-packages/requests/api.py", line 59', '  File "/usr/lib/python3.12/threading.py", line 1', "\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)", "    at Module._compile (internal/modules/cjs/loader.js:999:30)", 'File "src/widget/gone.py", line 3', "```"].join("\n");
   const { result } = await check({ text, index: indexRepo(repo.dir), isPull: false });
-  assert.deepEqual(kinds(result.unverified), ["path src/widget/gone.py"], "only the relative frame of this repository that does not exist");
-  assert.equal(result.checked.paths, 2, "the /app/ frame was matched to src/widget/sync.py");
+  // Frames are counted when they are ours and never reported: a relative frame is as often the reporter's own app.
+  assert.deepEqual(kinds(result.unverified), []);
+  assert.equal(result.checked.paths, 1, "the /app/ frame was matched to src/widget/sync.py");
 });
 
 test("options named without their dashes, and generated getters", async (t) => {

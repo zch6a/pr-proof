@@ -18,7 +18,8 @@ Telling someone that a true statement "could not be verified" is worse than miss
   node scripts/precision.mjs   # needs network and a GitHub token (GITHUB_TOKEN or `gh auth token`)
   ```
 
-  It checks 128 merged pull requests of seven public projects against a baseline (`scripts/corpus.json`). A new
+  It checks the merged pull requests and closed issues of eleven public projects against a baseline
+  (`scripts/corpus.json`). A new
   flag there is almost always a false alarm: fix it, or explain in the pull request why it is a real catch and
   update the baseline with `--update`.
 

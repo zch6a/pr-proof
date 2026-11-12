@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.5.0 — 2026-11-12
+
+Polishing round 4: a second independent review, and an ignore list.
+
+- **`ignore`** (and `--ignore` on the command line): names not to check, one per line or separated by commas, `*`
+  matching any characters (`h11.*`, `--cov*`, `vendor/*`): the function only a dependency has, the option of another
+  tool, a generated tree.
+- **False alarms the review found, all fixed:** "Covered by existing tests", "Removes the flaky test", template
+  answers ("Tests added: No", "Added tests: none needed"), "a test id / plan / database", "speed up tests on CI",
+  copied upstream release notes ("… by @bob in https://…", "@x made their first contribution in …") and
+  `<blockquote>` text, status marks (`[ ] Tests added`, `❌`); the text of links (`[#456](other repo)`,
+  ``[`computeBackoff()`](other repo)``), other trackers ("Debian bug #1012345"), stack frames written as prose (PHP
+  `#0 /var/www/...`, gdb), standard libraries of Java, C#, PHP, Swift and Python built-ins, options of git, npm, pip
+  and cargo (`--force-with-lease`, `--no-verify`); fences indented inside lists, an unclosed `<!--` (which hides the
+  rest on GitHub). Relative stack frames are counted, never reported (they are as often the reporter's own app).
+- **Tests and docs in the code:** `#[tokio::test(...)]`, `#[rstest]`, C# `[Fact]`/`[Theory]`, `test-d.ts`, Django
+  `tests.py`, Perl `t/*.t`, assertions; docstrings and doc comments edited inside (continuation lines), Go doc
+  comments; `CHANGES`, towncrier `newsfragments/`, changesets.
+- **Missed before, caught now:** paths ending in `.rs`, `.sh` and other extensions a library-name rule dropped
+  (`src/main.rs`, `scripts/build.sh`), more extensions (`.zig`, `.jl`, `.cu`, `.sol`, `.tf`, ...), closing keywords
+  through a link or in bold (`Fixes [#7](...)`, `Fixes **#7**`).
+- **The Action:** GitHub not answering (a 502, a rate limit) on the files or the comments is a warning and the job
+  summary, never a red check for the contributor; a comment deleted between runs is written again; a failed listing
+  of comments no longer posts a second one; the label is set even when the comment is refused (a locked
+  conversation); a pull request of more than 3,000 files counts as not fully read. The README's workflow has a
+  `concurrency` group, so an edit right after opening does not race it to the comment.
+- **Speed:** the regular expression for hyphenated words was quadratic on long runs of letters (28 s on a 256 KB line
+  a contributor can put in a patch); now linear.
+- Statements are quoted as written (code included); the command line's `--base` ignores the user's diff prefixes;
+  at most 40 claims of each kind for title and body together; README, SECURITY and CONTRIBUTING list every API call
+  and the current numbers.
+- **A correction:** expressjs/express#7468, counted in rounds 1 and 3 as a real catch ("added unit tests" with no
+  test changed), is a release pull request; that line is the copied release note of another pull request. It was a
+  false alarm, and is now left alone. On the eleven projects: 7 statements in 7 of 230 merged pull requests (one
+  real), none in 79 issues.
+
 ## 0.4.0 — 2026-11-12
 
 Polishing round 3: a fresh sample, issues, more languages. The precision run now covers eleven projects and closed

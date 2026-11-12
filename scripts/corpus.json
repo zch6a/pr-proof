@@ -48,10 +48,6 @@
     "expect": {
       "7112": [
         "path: test/res.sendFile.guards.js"
-      ],
-      "7468": [
-        "tests: * test: added unit tests for utils.compileETag to cover valid and invalid inputs",
-        "ref: https://github.com/expressjs/express/pull/6903"
       ]
     },
     "issues": [

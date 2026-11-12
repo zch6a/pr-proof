@@ -66,11 +66,11 @@ Skipped on purpose, because a contributor told that something true "could not be
 
 **Measured** on 230 recently merged pull requests and 79 closed issues of eleven projects (Flask, Express, HTTPie,
 bat, HTTPX, Vite, cobra, OkHttp, Laravel, mdBook, Docusaurus: Python, JavaScript and TypeScript, Rust, Go, Kotlin and
-Java, PHP), where nearly everything flagged would be a false alarm: 9 statements in 8 pull requests, none in the
-issues. Three are real (a description naming a file the pull request does not touch, "added unit tests" on a pull
-request that changes no test, a link to a pull request that does not exist), five say "fixes" for a pull request
-(superseded and closed), one is a function from a dependency. Indexing took at most 5 seconds and 230 MB (Docusaurus,
-4,310 files). `scripts/precision.mjs` re-runs it against that baseline.
+Java, PHP), where nearly everything flagged would be a false alarm: 7 statements in 7 pull requests, none in the
+issues. One is a real catch (a description naming as its location a file the pull request does not touch), five say
+"fixes" for a pull request (superseded and closed), one is a function from a dependency (`ignore` takes it). Indexing
+took at most 6.4 seconds and 230 MB (Docusaurus, 4,310 files). `scripts/precision.mjs` re-runs it against that
+baseline.
 
 ## What it never does
 
@@ -100,6 +100,10 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+# One run at a time per pull request or issue (an edit right after opening would otherwise race it to the comment).
+concurrency:
+  group: pr-proof-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -108,7 +112,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.4.0
+      - uses: zch6a/pr-proof@v0 # or a release, e.g. @v0.5.0
         with:
           mode: summary # start with the job summary only; switch to "comment" when you like what it says
 ```
@@ -117,6 +121,7 @@ jobs:
 |---|---|---|
 | `mode` | `comment` | `comment`: one comment (edited on later runs) and the label. `summary`: only the job summary, a dry run |
 | `label` | `needs-evidence` | added while something is unverified, removed when everything checks out; empty for none |
+| `ignore` | | names not to check, one per line or separated by commas: functions of a dependency, options of another tool, generated paths; `*` matches any characters (`h11.*`, `--cov*`, `vendor/*`) |
 | `issue-names` | `false` | in issues, also check file, function and option names (see below) |
 | `check-maintainers` | `false` | also check owners, members and collaborators |
 | `fail-on-unverified` | `false` | fail the job when something could not be verified |
@@ -147,10 +152,12 @@ Exit code 0 when everything checked was found, 1 when something could not be ver
 ## Limits
 
 - **A name in a dependency is reported.** `requests.get()` is found if `get` appears anywhere in your repository,
-  which it usually does; a function only a dependency has is not. The comment says how to answer.
+  which it usually does; a function only a dependency has is not. The comment says how to answer, and `ignore`
+  takes such names for good.
 - Function and option names are checked only when the whole repository (up to 300 MB of text; source files up to
   16 MB, UTF-8 or UTF-16) and the whole diff could be read; otherwise they are listed as not checked, never as
-  missing. References and advisories that could not be looked up (rate limits, a repository the token cannot see)
+  missing (also for a pull request of more than 3,000 files, which is all the API lists). References and advisories
+  that could not be looked up (rate limits, a repository the token cannot see)
   are listed as not checked too.
 - "Adds tests" and "updates the docs" are recognised in English, and test and documentation files by their names and
   folders (`tests/`, `*.test.ts`, `test_*.py`, `*_test.go`, `docs/`, `README`, `*.md`).
@@ -159,8 +166,10 @@ Exit code 0 when everything checked was found, 1 when something could not be ver
 
 ## What it sends
 
-The GitHub API calls of the Action (with the workflow's token): the pull request's files, the issues it references,
-its own comment and label, GHSA ids. CVE ids go to the CVE list's public API (cveawg.mitre.org). Nothing else, and
+The GitHub API calls of the Action (with the workflow's token): the pull request's files, the issues it references
+(and, when one is not found, the repository, and GraphQL for a discussion of that number), GHSA ids (global, then the
+repository's own advisories), the token's own user (to find its comment with a personal token), and its own comment
+and label. CVE ids go to the CVE list's public API (cveawg.mitre.org). Nothing else, and
 nothing to any other service.
 
 ## Develop

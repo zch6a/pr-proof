@@ -21,8 +21,19 @@ import { hasPath, inSubmodule, isRooted, trackedSuffix } from "./repo.js";
 /** @typedef {{unverified: Unverified[], checked: Record<string, number>, notChecked: string[]}} Result */
 
 /** Changed files that are tests, and that are documentation. */
-export const TEST_FILE = /(^|\/)(tests?|__tests__|spec|specs|testing|e2e|testdata|fixtures|__snapshots__)\/|[._-](test|spec|tests|unittest)\.[a-z0-9]+$|_(test|unittest)\.(go|py|rb|exs?|cc|cpp|c)$|(^|\/)test_[^/]+\.py$|(Tests?|IT|Spec)\.(java|kt|cs|swift|php|scala|groovy)$|\.cy\.[jt]sx?$/i;
-export const DOC_FILE = /(^|\/)(docs?|documentation|website|site|man|guides?|examples?)\/|(^|\/)(readme|changelog|contributing|history|news|authors)[^/]*$|\.(md|mdx|rst|adoc|txt|rd|rdoc|pod)$/i;
+export const TEST_FILE = /(^|\/)(tests?|__tests__|spec|specs|testing|e2e|testdata|fixtures|__snapshots__|t)\/|[._-](test|spec|tests|unittest|test-d)\.[a-z0-9]+$|_(test|unittest)\.(go|py|rb|exs?|cc|cpp|c)$|(^|\/)test_[^/]+\.py$|(^|\/)tests?\.(py|js|ts|rb|mjs)$|(Tests?|IT|Spec|Should)\.(java|kt|cs|swift|php|scala|groovy)$|[./](Unit|Integration)?Tests?\/|\.cy\.[jt]sx?$|\.t$/i;
+export const DOC_FILE = /(^|\/)(docs?|documentation|website|site|man|guides?|examples?|newsfragments|changelog\.d|changes|\.changeset)\/|(^|\/)(readme|changelog|changes|contributing|history|news|authors)[^/]*$|\.(md|mdx|rst|adoc|txt|rd|rdoc|pod)$/i;
+
+/**
+ * The maintainers' list of names not to check (`ignore`): functions of a dependency, options of another tool,
+ * paths of a generated tree. An entry matches a function's name or its whole text, an option, or a path; `*` stands
+ * for any characters (`h11.*`, `--cov*`, `vendor/*`).
+ * @param {string[]} patterns
+ */
+export function ignoreList(patterns) {
+  const res = patterns.map((p) => p.trim()).filter(Boolean).map((p) => new RegExp(`^${p.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`, "i"));
+  return (/** @type {string[]} */ ...texts) => texts.some((t) => res.some((r) => r.test(t)));
+}
 
 /** Lookups per check, at most: one text must not use up the token's API budget. */
 const MAX_LOOKUPS = 30;
@@ -46,13 +57,14 @@ function spellings(name) {
 /**
  * @param {Claims} claims
  * @param {RepoIndex} index the repository the text is about (for a pull request: its base)
- * @param {{changes?: Changes | null, owner: string, repo: string, lookups?: Lookups, isPull?: boolean, names?: boolean}} context
+ * @param {{changes?: Changes | null, owner: string, repo: string, lookups?: Lookups, isPull?: boolean, names?: boolean, ignore?: string[]}} context
  *   names: whether file, function and option names are checked (the Action checks them in issues only when asked:
  *   there they are mostly the reporter's own code, proposals, or names that were true when the issue was opened)
  * @returns {Promise<Result>}
  */
 export async function verify(claims, index, context) {
-  const { changes = null, owner, repo, lookups = {}, isPull = false, names = true } = context;
+  const { changes = null, owner, repo, lookups = {}, isPull = false, names = true, ignore = [] } = context;
+  const ignored = ignoreList(ignore);
   /** @type {Unverified[]} */
   const unverified = [];
   /** @type {Record<string, number>} */
@@ -66,10 +78,16 @@ export async function verify(claims, index, context) {
     notChecked.push("file, function and option names (in issues they are mostly the reporter's own code or proposals; `issue-names: true` checks them)");
   }
   for (const p of names ? claims.paths : []) {
+    if (ignored(p.text)) continue;
     if (p.absolute) {
       // A frame from another machine: only its end can be this repository's file; if no tracked file ends like it,
       // it is a file of something else (the runtime, a dependency), not a claim about this repository.
       if (trackedSuffix(index, p.text)) checked.paths++;
+      continue;
+    }
+    // A relative frame is counted when it is ours, never reported: it is as often the reporter's own app.
+    if (p.frame) {
+      if (isRooted(index, p.text, changes) && hasPath(index, p.text, changes)) checked.paths++;
       continue;
     }
     // Not about this repository (its first folder is not one of ours), in a submodule, or ignored (generated,
@@ -88,10 +106,12 @@ export async function verify(claims, index, context) {
   } else {
     const has = (/** @type {string} */ w) => index.words.has(w) || !!changes?.words.has(w);
     for (const s of claims.symbols) {
+      if (ignored(s.name, s.text, s.text.replace(/\(.*$/, ""))) continue;
       checked.symbols++;
       if (!spellings(s.name).some(has)) unverified.push({ kind: "symbol", said: s.text, line: s.line, detail: `The name \`${s.name}\` appears nowhere ${where}${at}.` });
     }
     for (const o of claims.options) {
+      if (ignored(o.text)) continue;
       checked.options++;
       // Frameworks name options without the dashes (`flag.Bool("dry-run")`, clap's `dry_run`), and add `--no-x` for `--x`.
       const bare = o.text.replace(/^--/, "");
@@ -133,7 +153,8 @@ export async function verify(claims, index, context) {
   } else if (claims.advisories.length) notChecked.push("CVE and GHSA ids (no network access)");
 
   if (isPull && changes) {
-    const changed = [...changes.files];
+    // Removed files count too: a pull request that deletes a test file has changed tests.
+    const changed = [...changes.files, ...changes.removed];
     if (claims.tests) {
       checked.statements++;
       if (!changed.some((f) => TEST_FILE.test(f)) && !changes.testCode) unverified.push({ kind: "tests", said: claims.tests.text, line: claims.tests.line, detail: "It says it adds tests, but none of the changed files is a test file, and no added line is a test." });

@@ -21,7 +21,9 @@ import { EXT } from "./claims.js";
  */
 
 const WORD = /[A-Za-z_$][\w$]{2,}/g;
-const KEBAB = /[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)+/g;
+// The lookbehind starts a match only at the start of a word: without it a long run of letters is tried from every
+// position (quadratic: 28 s on a 256 KB line a contributor can put in a patch).
+const KEBAB = /(?<![A-Za-z0-9-])[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)+/g;
 const OPTION = /--[a-zA-Z][a-zA-Z0-9]*(?:[-_][a-zA-Z0-9]+)*/g;
 /** Text files up to this size are indexed; source files up to the larger one (an amalgamated C file can be 9 MB). */
 const MAX_TEXT = 1024 * 1024;
@@ -120,9 +122,10 @@ export function indexRepo(dir, o = {}) {
  */
 
 /** Added lines that are tests whatever the file is called (Rust and Go keep unit tests next to the code). */
-const TEST_CODE = /#\[(?:test|cfg\(test\)|tokio::test)\]|^\+\s*(?:def test_|async def test_|func Test|@Test\b|TEST(?:_F)?\(|(?:it|test|describe)\(\s*["'`])/m;
-/** Added lines that are documentation in code: docstrings and doc comments. */
-const DOC_COMMENT = /^\+\s*(?:"""|'''|\/\*\*|\/\/\/|\/\/!|#'|\* @)/m;
+const TEST_CODE = /#\[[\w:]*(?:test|rstest|cfg\(test\))[\w:]*(?:\(|\])|^\+\s*(?:def test_|async def test_|func Test|@Test\b|@(?:Parameterized|Repeated)Test\b|\[(?:Fact|Theory|Test|TestMethod|TestCase)\b|TEST(?:_F|_P)?\(|(?:it|test|describe)\(\s*["'`]|assert\w*[\s(]|self\.assert\w+\(|expect\()/m;
+/** Changed lines that are documentation in code: docstrings, doc comments, and lines inside them. */
+// (A plain `# comment` or `// comment` is not documentation; a Go doc comment starts with the name it describes.)
+const DOC_COMMENT = /^[+-]\s*(?:[rRuUbB]?"""|'''|\/\*\*|\*(?:\s|$)|\/\/\/|\/\/!|\/\/\s+[A-Z]\w*\s|#'|#\s*@\w+|@param|@return)/m;
 
 /**
  * A pull request's changes, as the GitHub API lists them: files added, changed, renamed or removed, and the words and

@@ -11,6 +11,9 @@ inputs:
   label:
     description: Label added while something is unverified and removed when everything checks out; empty for none
     default: needs-evidence
+  ignore:
+    description: 'Names not to check, one per line or separated by commas: functions of a dependency, options of another tool, generated paths; "*" matches any characters (h11.*, --cov*, vendor/*)'
+    default: ""
   issue-names:
     description: In issues, also check the file, function and option names (off by default: in issues they are mostly the reporter's own project or proposals; references and advisories are always checked)
     default: "false"
