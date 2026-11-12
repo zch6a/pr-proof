@@ -1,0 +1,28 @@
+name: pr-proof
+description: Checks what a pull request or issue says against the repository (files, functions, options, issues, advisories, "adds tests"). No AI; states facts, asks for evidence.
+author: zch6a
+branding:
+  icon: check-square
+  color: blue
+inputs:
+  mode:
+    description: '"comment" (one comment listing what could not be verified, edited on later runs) or "summary" (only the job summary: a dry run)'
+    default: comment
+  label:
+    description: Label added while something is unverified and removed when everything checks out; empty for none
+    default: needs-evidence
+  check-maintainers:
+    description: Also check pull requests and issues by owners, members and collaborators
+    default: "false"
+  fail-on-unverified:
+    description: Fail the job when something could not be verified
+    default: "false"
+  github-token:
+    description: Token for the API (reading the pull request's files and issues; writing the comment and label)
+    default: ${{ github.token }}
+outputs:
+  unverified:
+    description: How many statements could not be verified
+runs:
+  using: node24
+  main: src/action.js

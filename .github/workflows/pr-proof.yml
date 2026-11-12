@@ -1,0 +1,22 @@
+name: pr-proof
+# pr-proof checks this repository's own pull requests and issues, as the README shows (the action from the base
+# branch: `uses: ./` runs the checked-out base, never the pull request's code).
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+  issues:
+    types: [opened, edited]
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./
+        with:
+          mode: comment
