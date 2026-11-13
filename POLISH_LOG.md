@@ -224,3 +224,9 @@ than English; GitHub Enterprise's advisory database.
 ## Lockfile - 2026-11-13
 
 `package-lock.json` recorded the 3 download URLs from this machine's npm mirror (`registry.npmmirror.com`) instead of the public registry, so CI and anyone installing fetched from a mirror they never chose. Every `resolved` URL now points at `registry.npmjs.org`; nothing else changed (same versions, and the integrity hashes still match because the tarballs are identical). Checked: `npm ci --ignore-scripts`, `npm run check` and the tests pass; `npm audit` against the public registry finds 0 vulnerabilities.
+
+### 2026-11-14 — Chinese README: AI tone
+
+- 1 place changed in README.zh-CN.md: a long stacked attributive (several 的) before "PR 和 bug 报告" split into separate clauses; the colon-led list after it is unchanged.
+- The checks follow the findings of lieflat-less-ai-tone (shiujan, CC BY-NC 4.0): its findings applied, its text not copied.
+- Left as they were: colon-led lists, the bold "不…" lines, must-be-complete enumerations; the numbers the contract test reads are untouched.
