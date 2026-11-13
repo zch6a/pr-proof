@@ -230,3 +230,11 @@ than English; GitHub Enterprise's advisory database.
 - 1 place changed in README.zh-CN.md: a long stacked attributive (several 的) before "PR 和 bug 报告" split into separate clauses; the colon-led list after it is unchanged.
 - The checks follow the findings of lieflat-less-ai-tone (shiujan, CC BY-NC 4.0): its findings applied, its text not copied.
 - Left as they were: colon-led lists, the bold "不…" lines, must-be-complete enumerations; the numbers the contract test reads are untouched.
+
+### 2026-11-14 — the release workflow and plain tags
+
+The release workflow moves the major tag (v0) to the released commit. For a plain (lightweight) tag it asked GitHub
+for a tag object at the commit's sha; that request fails, gh prints the error body on stdout, and the `|| echo` kept
+that text in front of the sha, so v0 would not have moved. It now reads the ref's type and follows a tag object only
+for an annotated tag, and stops if what it got is not a sha (the same fix arxiv-diff had in its final review).
+Releases so far used annotated tags and were not affected.
